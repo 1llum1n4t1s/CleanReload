@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 440px; height: 280px;
+    background: linear-gradient(135deg, #4FC3F7 0%, #0288D1 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', sans-serif;
+    overflow: hidden;
+  }
+  .container {
+    display: flex; align-items: center; gap: 24px;
+  }
+  .icon-wrap {
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .text-area {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .title {
+    font-size: 28px; font-weight: 800; color: white;
+    letter-spacing: 1px;
+  }
+  .desc {
+    font-size: 16px; color: rgba(255,255,255,0.9);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon-wrap">
+      <svg width="64" height="64" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 64,26 A 38,38 0 1,1 31,45" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+        <polygon points="20,34 31,56 42,34" fill="white"/>
+        <g fill="#FFF176">
+          <polygon points="100,22 103,14 106,22 114,25 106,28 103,36 100,28 92,25" opacity="0.9"/>
+          <polygon points="30,82 32,77 34,82 39,84 34,86 32,91 30,86 25,84" opacity="0.7"/>
+        </g>
+      </svg>
+    </div>
+    <div class="text-area">
+      <div class="title">Clean Reload</div>
+      <div class="desc">ワンクリックで<br>スーパーリロード</div>
+    </div>
+  </div>
+</body>
+</html>

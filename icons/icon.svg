@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4FC3F7"/>
+      <stop offset="100%" style="stop-color:#0288D1"/>
+    </linearGradient>
+  </defs>
+  <!-- 角丸四角形の背景 -->
+  <rect x="4" y="4" width="120" height="120" rx="24" ry="24" fill="url(#bg)"/>
+  <!-- リロード矢印：12時位置から時計回りに約300度の円弧 -->
+  <path d="M 64,26 A 38,38 0 1,1 31,45"
+        fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+  <!-- 矢じり：円弧の終端で下向き（時計回りの進行方向） -->
+  <polygon points="20,34 31,56 42,34" fill="white"/>
+  <!-- きらめきマーク -->
+  <g fill="#FFF176">
+    <polygon points="100,22 103,14 106,22 114,25 106,28 103,36 100,28 92,25" opacity="0.9"/>
+    <polygon points="30,82 32,77 34,82 39,84 34,86 32,91 30,86 25,84" opacity="0.7"/>
+  </g>
+</svg>

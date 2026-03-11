@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px; height: 800px;
+    background: linear-gradient(135deg, #0D47A1 0%, #1565C0 40%, #42A5F5 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+  /* 背景の装飾円 */
+  .bg-circle {
+    position: absolute; border-radius: 50%; opacity: 0.08;
+    background: white;
+  }
+  .bg-circle.c1 { width: 600px; height: 600px; top: -200px; right: -100px; }
+  .bg-circle.c2 { width: 400px; height: 400px; bottom: -150px; left: -80px; }
+  .container {
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 36px;
+    z-index: 1;
+  }
+  .icon-wrap {
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 40px;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .title {
+    font-size: 72px; font-weight: 900; color: white;
+    letter-spacing: 4px;
+    text-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .tagline {
+    font-size: 32px; font-weight: 500; color: rgba(255,255,255,0.9);
+    letter-spacing: 1px;
+  }
+  .badge {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    padding: 14px 40px;
+    font-size: 22px; font-weight: 600; color: white;
+    backdrop-filter: blur(4px);
+  }
+</style>
+</head>
+<body>
+  <div class="bg-circle c1"></div>
+  <div class="bg-circle c2"></div>
+  <div class="container">
+    <div class="icon-wrap">
+      <svg width="120" height="120" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 64,26 A 38,38 0 1,1 31,45" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+        <polygon points="20,34 31,56 42,34" fill="white"/>
+        <g fill="#FFF176">
+          <polygon points="100,22 103,14 106,22 114,25 106,28 103,36 100,28 92,25" opacity="0.9"/>
+          <polygon points="30,82 32,77 34,82 39,84 34,86 32,91 30,86 25,84" opacity="0.7"/>
+        </g>
+      </svg>
+    </div>
+    <div class="title">Clean Reload</div>
+    <div class="tagline">キャッシュを完全クリアして、常に最新のページを。</div>
+    <div class="badge">Chrome拡張機能 ・ 無料 ・ 軽量</div>
+  </div>
+</body>
+</html>

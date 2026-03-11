@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px; height: 800px;
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', sans-serif;
+    overflow: hidden;
+  }
+  .container {
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 40px;
+  }
+  .icon-area {
+    display: flex; align-items: center; gap: 32px;
+  }
+  .icon-box {
+    width: 160px; height: 160px;
+    background: white;
+    border-radius: 32px;
+    box-shadow: 0 12px 40px rgba(2, 136, 209, 0.25);
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* インラインSVGアイコン */
+  .reload-icon {
+    width: 110px; height: 110px;
+  }
+  .title {
+    font-size: 64px; font-weight: 800;
+    color: #0277BD;
+    text-shadow: 0 2px 8px rgba(2, 136, 209, 0.15);
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    font-size: 30px; font-weight: 500;
+    color: #01579B;
+    opacity: 0.85;
+  }
+  .features {
+    display: flex; gap: 48px; margin-top: 12px;
+  }
+  .feature {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255, 0.7);
+    padding: 16px 28px;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+  .feature-icon {
+    font-size: 36px;
+  }
+  .feature-text {
+    font-size: 22px; font-weight: 600; color: #0277BD;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon-area">
+      <div class="icon-box">
+        <svg class="reload-icon" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#4FC3F7"/>
+              <stop offset="100%" style="stop-color:#0288D1"/>
+            </linearGradient>
+          </defs>
+          <rect x="4" y="4" width="120" height="120" rx="24" ry="24" fill="url(#bg)"/>
+          <path d="M 64,26 A 38,38 0 1,1 31,45" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+          <polygon points="20,34 31,56 42,34" fill="white"/>
+          <g fill="#FFF176">
+            <polygon points="100,22 103,14 106,22 114,25 106,28 103,36 100,28 92,25" opacity="0.9"/>
+            <polygon points="30,82 32,77 34,82 39,84 34,86 32,91 30,86 25,84" opacity="0.7"/>
+          </g>
+        </svg>
+      </div>
+      <div class="title">Clean Reload</div>
+    </div>
+    <div class="subtitle">ワンクリックでキャッシュを完全クリア+リロード</div>
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">🔄</span>
+        <span class="feature-text">Service Worker 解除</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🗑️</span>
+        <span class="feature-text">CacheStorage 削除</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">💾</span>
+        <span class="feature-text">HTTPキャッシュ 実削除</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1400px; height: 560px;
+    background: linear-gradient(135deg, #0D47A1 0%, #1976D2 50%, #42A5F5 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Segoe UI', 'Yu Gothic UI', 'Meiryo', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+  .bg-circle {
+    position: absolute; border-radius: 50%; opacity: 0.06;
+    background: white;
+  }
+  .bg-circle.c1 { width: 500px; height: 500px; top: -150px; right: -50px; }
+  .bg-circle.c2 { width: 350px; height: 350px; bottom: -120px; left: -60px; }
+  .container {
+    display: flex; align-items: center; gap: 64px;
+    z-index: 1;
+  }
+  .icon-wrap {
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 48px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.2);
+  }
+  .text-area {
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .title {
+    font-size: 64px; font-weight: 900; color: white;
+    letter-spacing: 3px;
+  }
+  .desc {
+    font-size: 28px; color: rgba(255,255,255,0.9);
+    line-height: 1.5;
+  }
+  .tags {
+    display: flex; gap: 16px; margin-top: 4px;
+  }
+  .tag {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 30px;
+    padding: 10px 24px;
+    font-size: 18px; font-weight: 600; color: white;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-circle c1"></div>
+  <div class="bg-circle c2"></div>
+  <div class="container">
+    <div class="icon-wrap">
+      <svg width="130" height="130" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+        <path d="M 64,26 A 38,38 0 1,1 31,45" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+        <polygon points="20,34 31,56 42,34" fill="white"/>
+        <g fill="#FFF176">
+          <polygon points="100,22 103,14 106,22 114,25 106,28 103,36 100,28 92,25" opacity="0.9"/>
+          <polygon points="30,82 32,77 34,82 39,84 34,86 32,91 30,86 25,84" opacity="0.7"/>
+        </g>
+      </svg>
+    </div>
+    <div class="text-area">
+      <div class="title">Clean Reload</div>
+      <div class="desc">SW・CacheStorage・HTTPキャッシュを完全クリアしてリロード。<br>Web開発やデバッグに最適な軽量ツール。</div>
+      <div class="tags">
+        <div class="tag">⚡ ワンクリック</div>
+        <div class="tag">🗑️ キャッシュ完全削除</div>
+        <div class="tag">🔄 Service Worker 解除</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

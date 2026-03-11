@@ -1,0 +1,23 @@
+{
+  "name": "clean-reload",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "description": "Chrome extension for one-click hard reload (bypass cache)",
+  "scripts": {
+    "generate-icons": "node scripts/generate-icons.js",
+    "generate-screenshots": "node webstore/generate-screenshots.js",
+    "build": "npm run generate-icons && npm run generate-screenshots"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.37.5",
+    "sharp": "^0.33.0"
+  },
+  "keywords": [
+    "chrome-extension",
+    "hard-reload",
+    "super-reload",
+    "cache-bypass"
+  ],
+  "author": "",
+  "license": "MIT"
+}
