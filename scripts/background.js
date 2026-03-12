@@ -6,8 +6,8 @@ chrome.action.onClicked.addListener(async (tab) => {
     return;
   }
 
+  // 1. Service Worker登録解除 + CacheStorage全消去をページコンテキストで実行
   try {
-    // 1. Service Worker登録解除 + CacheStorage全消去をページコンテキストで実行
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: async () => {
@@ -24,15 +24,19 @@ chrome.action.onClicked.addListener(async (tab) => {
         }
       }
     });
+  } catch (error) {
+    // スクリプト実行が許可されないページ（例: Chrome Web Store）では無視して続行
+    console.warn('Clean Reload: スクリプト実行スキップ:', error.message);
+  }
 
-    // 2. HTTPキャッシュを該当オリジンから実削除
+  // 2. HTTPキャッシュを該当オリジンから実削除
+  try {
     const origin = new URL(tab.url).origin;
     await chrome.browsingData.removeCache({ origins: [origin] });
-
-    // 3. キャッシュをバイパスしてリロード
-    await chrome.tabs.reload(tab.id, { bypassCache: true });
   } catch (error) {
-    // スクリプト実行が許可されないページ（例: Chrome Web Store）では無視
-    console.error('Clean Reload 実行エラー:', error.message);
+    console.warn('Clean Reload: キャッシュ削除スキップ:', error.message);
   }
+
+  // 3. キャッシュをバイパスしてリロード（常に実行）
+  await chrome.tabs.reload(tab.id, { bypassCache: true });
 });
