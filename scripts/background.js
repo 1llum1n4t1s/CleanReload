@@ -6,37 +6,34 @@ chrome.action.onClicked.addListener(async (tab) => {
     return;
   }
 
-  // 1. SW/CacheStorage消去とHTTPキャッシュ削除を並列実行（ラグ軽減）
-  await Promise.all([
-    // Service Worker登録解除 + CacheStorage全消去をページコンテキストで実行
-    chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: async () => {
-        // Service Workerの登録をすべて解除
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map(r => r.unregister()));
-        }
-
-        // CacheStorage内のキャッシュをすべて削除
-        if ('caches' in window) {
-          const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map(name => caches.delete(name)));
-        }
+  // 1. SW/CacheStorage消去とHTTPキャッシュ削除をfire-and-forget（完了を待たない）
+  // bypassCache: true でHTTPキャッシュは無視されるため、削除完了前にリロードしても安全
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: async () => {
+      // Service Workerの登録をすべて解除
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
       }
-    }).catch(error => {
-      // スクリプト実行が許可されないページ（例: Chrome Web Store）では無視して続行
-      console.warn('Clean Reload: スクリプト実行スキップ:', error.message);
-    }),
 
-    // HTTPキャッシュを該当オリジンから実削除
-    chrome.browsingData.removeCache({
-      origins: [new URL(tab.url).origin]
-    }).catch(error => {
-      console.warn('Clean Reload: キャッシュ削除スキップ:', error.message);
-    })
-  ]);
+      // CacheStorage内のキャッシュをすべて削除
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+      }
+    }
+  }).catch(error => {
+    // スクリプト実行が許可されないページ（例: Chrome Web Store）では無視
+    console.warn('Clean Reload: スクリプト実行スキップ:', error.message);
+  });
 
-  // 2. キャッシュをバイパスしてリロード（常に実行）
-  await chrome.tabs.reload(tab.id, { bypassCache: true });
+  chrome.browsingData.removeCache({
+    origins: [new URL(tab.url).origin]
+  }).catch(error => {
+    console.warn('Clean Reload: キャッシュ削除スキップ:', error.message);
+  });
+
+  // 2. キャッシュをバイパスして即リロード（クリア完了を待たない）
+  chrome.tabs.reload(tab.id, { bypassCache: true });
 });
