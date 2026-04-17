@@ -20,8 +20,7 @@
 ## 権限
 
 - **activeTab** — クリック時にアクティブなタブのみにアクセス
-- **scripting** — ページ内のService Worker/CacheStorageをクリアするために使用
-- **browsingData** — HTTPキャッシュを該当オリジンから実削除するために使用
+- **browsingData** — 該当オリジンの Service Worker 登録 / CacheStorage / HTTP キャッシュを削除するために使用
 
 ## ライセンス
 
