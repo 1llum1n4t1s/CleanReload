@@ -2,7 +2,9 @@
 
 # Clean Reload 拡張機能パッケージ生成スクリプト
 
-cd "$(dirname "$0")" || exit 1
+set -euo pipefail
+
+cd "$(dirname "$0")"
 
 echo "拡張機能パッケージを生成中..."
 echo ""
@@ -11,10 +13,10 @@ echo ""
 rm -f ./clean-reload.zip
 echo "既存のZIPファイルを削除しました"
 
-# アイコン生成
+# アイコン生成 (失敗時は set -e により即 exit)
 if [ -f scripts/generate-icons.js ]; then
   echo "アイコン生成中..."
-  npm install --silent 2>/dev/null
+  npm install --silent
   node scripts/generate-icons.js
 fi
 
@@ -33,12 +35,7 @@ zip -r ./clean-reload.zip \
   src/ \
   -x "*.DS_Store" "*.swp" "*~"
 
-if [ $? -eq 0 ]; then
-  echo "ZIPファイルを作成しました: clean-reload.zip"
-  echo ""
-  echo "ファイルサイズ:"
-  ls -lh ./clean-reload.zip
-else
-  echo "ZIPファイルの作成に失敗しました"
-  exit 1
-fi
+echo "ZIPファイルを作成しました: clean-reload.zip"
+echo ""
+echo "ファイルサイズ:"
+ls -lh ./clean-reload.zip
