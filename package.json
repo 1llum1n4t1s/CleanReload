@@ -1,6 +1,6 @@
 {
   "name": "clean-reload",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "type": "commonjs",
   "description": "Chrome extension for one-click hard reload (bypass cache)",
   "scripts": {
