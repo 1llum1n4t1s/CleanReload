@@ -51,8 +51,12 @@ CleanReload/
 │   └── background/
 │       └── background.js    # service worker
 ├── scripts/
-│   └── generate-icons.js    # ビルドツール（PNG生成）
-├── webstore/                # ストア申請用スクショ
+│   └── generate-icons.js    # PNGアイコン生成（sharp）
+├── webstore/                # ストア申請アセット
+│   ├── *.html               # 掲載画像テンプレート
+│   ├── generate-screenshots.js  # HTML→PNG変換（puppeteer、scripts/ ではなくここ）
+│   └── store-listing.txt    # ストア説明文
+├── docs/privacy-policy.md   # ストア申請に必須のプライバシーポリシー
 └── .github/workflows/publish.yml  # 自動公開ワークフロー
 ```
 
