@@ -1,6 +1,8 @@
 # クリーンリロード 拡張機能パッケージ生成スクリプト
 # 使い方: powershell -ExecutionPolicy Bypass -File zip.ps1
 
+$ErrorActionPreference = "Stop"
+
 Write-Host "拡張機能パッケージを生成中..." -ForegroundColor Cyan
 Write-Host ""
 
@@ -10,8 +12,10 @@ if ($scriptDir) { Set-Location $scriptDir }
 
 # アイコン生成
 Write-Host "アイコンを生成中..." -ForegroundColor Yellow
-npm install --silent 2>$null
+npm install --silent
+if ($LASTEXITCODE -ne 0) { throw "npm install に失敗しました" }
 node scripts/generate-icons.js
+if ($LASTEXITCODE -ne 0) { throw "アイコン生成に失敗しました" }
 
 # 古いZIPファイルを削除
 $zipName = "clean-reload.zip"

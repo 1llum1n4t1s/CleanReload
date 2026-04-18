@@ -15,11 +15,14 @@ Clean Reload — ワンクリックでキャッシュ完全クリア+リロー�
 ## ビルドコマンド
 
 ```bash
-npm install                # 依存関係インストール（sharp, puppeteer）
-npm run generate-icons     # icons/icon.svg → icons/icon-{16,48,128}.png
-npm run generate-screenshots # webstore/*.html → webstore/images/*.png
+npm install                # 依存関係インストール（sharp + puppeteer/Chromium DL、初回は重い）
+npm run generate-icons     # icons/icon.svg → icons/icon-{16,48,128}.png（sharp のみ使用）
+npm run generate-screenshots # webstore/*.html → webstore/images/*.png（puppeteer 使用）
 npm run build              # 上記2つを順次実行
 ```
+
+- テスト・Lint・フォーマッタは**未定義**。`npm test` などは存在しない。
+- 拡張機能本体の開発には `sharp` しか不要。`generate-screenshots` はストア画像用途で、普段のコード編集では実行しなくてよい。
 
 ## 開発時の読み込み
 
@@ -63,11 +66,12 @@ CleanReload/
 ## アーキテクチャ
 
 - **manifest.json** — 拡張機能の定義。権限は `activeTab` + `browsingData`。popupなし（アイコンクリックで即実行）。
-- **src/background/background.js** — 唯一のランタイムコード。`chrome.action.onClicked` で `chrome.browsingData.remove` を origin スコープで呼び、SW/CacheStorage/HTTPキャッシュを削除したうえで `tabs.reload({bypassCache: true})`。ページ注入を使わないため Chrome Web Store 等の制限ページでも同じ挙動で動く。
+- **src/background/background.js** — 唯一のランタイムコード。`chrome.action.onClicked` で、まず `chrome.browsingData.remove({origins}, {cacheStorage, serviceWorkers})` を **await** して SW 登録と CacheStorage の削除を確実に待機（SW が fetch を横取りする race を排除）、続けて HTTP キャッシュ削除と `tabs.reload({bypassCache: true})` を fire-and-forget で発火。ページ注入を使わないため Chrome Web Store 等の制限ページでも同じ挙動で動く。
 - **icons/icon.svg** — マスターアイコン。ここを変更すれば `generate-icons.js` で全サイズ生成。
 - **webstore/*.html** — ストア掲載画像のHTMLテンプレート。`generate-screenshots.js`（Puppeteer）でPNGに変換。
 
 ## 制約事項
 
-- `chrome://`, `edge://`, `chrome-extension://` などの内部ページは `tab.url` から origin を解決できないため早期 return
-- `browsingData.remove` の失敗は `.catch()` でログのみ。fire-and-forget で UX を優先（v1.0.6 で確立した設計）
+- 内部・opaque origin ページ（`chrome:`, `edge:`, `chrome-extension:`, `about:`, `data:`, `javascript:`, `blob:`, `file:`）は `BLOCKED_PROTOCOLS` で早期 return。`new URL()` の throw も try-catch で吸収
+- SW/CacheStorage 削除は `await` で完了を待つ（`bypassCache` は HTTP キャッシュ層のみバイパスし SW の fetch 介入はバイパスできないため、古い SW の race を防ぐ必要がある）
+- HTTP キャッシュ削除と `tabs.reload({bypassCache:true})` は `.catch()` でログするだけの fire-and-forget（初版から継続する設計判断）

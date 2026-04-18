@@ -12,6 +12,9 @@ jobs:
   publish:
     name: Chrome Web Store 公開
     runs-on: ubuntu-latest
+    env:
+      # CI では scripts/generate-icons.js（sharp）しか実行しないので puppeteer の Chromium (~200MB) は不要
+      PUPPETEER_SKIP_DOWNLOAD: '1'
     steps:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v5
@@ -39,9 +42,21 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: 依存インストール
-        run: npm ci || npm install
+        run: npm ci
+
+      - name: package.json バージョンも一致するか確認
+        env:
+          MANIFEST_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          pkg_ver=$(node -p "require('./package.json').version")
+          if [ "$pkg_ver" != "$MANIFEST_VERSION" ]; then
+            echo "::error::package.json ($pkg_ver) と manifest.json ($MANIFEST_VERSION) が不一致"
+            exit 1
+          fi
+          echo "✅ package.json バージョン一致: $pkg_ver"
 
       - name: アイコン生成
         run: node scripts/generate-icons.js
@@ -59,7 +74,7 @@ jobs:
           CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
           CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
         run: |
-          npx --yes chrome-webstore-upload-cli@3 upload \
+          npx chrome-webstore-upload-cli upload \
             --source clean-reload.zip \
             --extension-id "$CWS_EXTENSION_ID" \
             --client-id "$CWS_CLIENT_ID" \

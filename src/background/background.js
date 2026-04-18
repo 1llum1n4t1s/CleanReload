@@ -1,30 +1,48 @@
 // アイコンクリック時にキャッシュ完全クリア+リロードを実行
 // Service Worker登録、CacheStorage、HTTPキャッシュをすべて消去してからリロード
+const BLOCKED_PROTOCOLS = new Set([
+  'chrome:',
+  'chrome-extension:',
+  'edge:',
+  'about:',
+  'data:',
+  'javascript:',
+  'blob:',
+  'file:',
+]);
+
 chrome.action.onClicked.addListener(async (tab) => {
-  // chrome:// や edge:// などの内部ページは操作不可
-  if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('chrome-extension://')) {
+  if (!tab?.url) return;
+
+  // 不正 URL / 内部ページ / opaque origin は早期 return
+  let origin;
+  try {
+    const parsed = new URL(tab.url);
+    if (BLOCKED_PROTOCOLS.has(parsed.protocol)) return;
+    origin = parsed.origin;
+  } catch {
     return;
   }
+  if (!origin || origin === 'null') return;
 
-  const origin = new URL(tab.url).origin;
-
-  // SW/CacheStorage/HTTPキャッシュ削除を fire-and-forget（完了を待たない）
-  // bypassCache: true でHTTPキャッシュは無視されるため、削除完了前にリロードしても安全
-  // browsingData.remove は origins 指定で対象オリジンのみをクリアでき、
-  // chrome.scripting.executeScript が拒否されるページ（Chrome Web Store 等）でも動作する
-  chrome.browsingData.remove(
+  // SW 登録と CacheStorage は await して完了させる
+  // 理由: bypassCache は HTTP キャッシュのみバイパスし、SW の fetch 介入はバイパスできない。
+  // 古い SW が生きたままリロードすると caches.match() 経由で古いレスポンスが返る競合を防ぐ。
+  await chrome.browsingData.remove(
     { origins: [origin] },
     { cacheStorage: true, serviceWorkers: true }
   ).catch(error => {
     console.warn('Clean Reload: SW/CacheStorage 削除スキップ:', error.message);
   });
 
+  // HTTP キャッシュは bypassCache: true で確実に無視されるため fire-and-forget で OK
   chrome.browsingData.removeCache({
     origins: [origin]
   }).catch(error => {
     console.warn('Clean Reload: HTTPキャッシュ削除スキップ:', error.message);
   });
 
-  // キャッシュをバイパスして即リロード（クリア完了を待たない）
-  chrome.tabs.reload(tab.id, { bypassCache: true });
+  chrome.tabs.reload(tab.id, { bypassCache: true }).catch(error => {
+    console.warn('Clean Reload: リロードスキップ:', error.message);
+  });
 });
