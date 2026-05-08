@@ -1,6 +1,6 @@
 {
   "name": "clean-reload",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "type": "commonjs",
   "description": "ワンクリックで Service Worker・CacheStorage・HTTP キャッシュを完全クリアしてページを再読み込みする Chrome 拡張機能",
   "scripts": {
