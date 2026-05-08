@@ -41,7 +41,7 @@ async function cleanReloadTab(tab) {
 }
 
 function notify(message) {
-  chrome.notifications.create({ type: 'basic', iconUrl: 'icons/icon-128.png', title: 'Clean Reload', message });
+  chrome.notifications.create({ type: 'basic', iconUrl: chrome.runtime.getURL('icons/icon-128.png'), title: 'Clean Reload', message });
 }
 
 chrome.action.onClicked.addListener(async (tab) => {
