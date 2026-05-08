@@ -59,7 +59,42 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener(async (info) => {
   if (info.menuItemId !== 'clean-reload-all-tabs') return;
-  const tabs = await chrome.tabs.query({});
-  notify(`全 ${tabs.length} タブをリロード中…`);
-  await Promise.all(tabs.map(cleanReloadTab));
+  const allTabs = await chrome.tabs.query({});
+  notify(`全 ${allTabs.length} タブをリロード中…`);
+
+  const reloadTargets = [];
+  const origins = new Set();
+  for (const tab of allTabs) {
+    if (!tab?.url) continue;
+    try {
+      const parsed = new URL(tab.url);
+      if (BLOCKED_PROTOCOLS.has(parsed.protocol)) continue;
+      if (!parsed.origin || parsed.origin === 'null') continue;
+      origins.add(parsed.origin);
+      reloadTargets.push(tab.id);
+    } catch {
+      continue;
+    }
+  }
+
+  if (origins.size === 0) return;
+
+  await chrome.browsingData.remove(
+    { origins: [...origins] },
+    { cacheStorage: true, serviceWorkers: true }
+  ).catch(error => {
+    console.warn('Clean Reload: SW/CacheStorage 削除スキップ:', error.message);
+  });
+
+  chrome.browsingData.removeCache({
+    origins: [...origins]
+  }).catch(error => {
+    console.warn('Clean Reload: HTTPキャッシュ削除スキップ:', error.message);
+  });
+
+  for (const tabId of reloadTargets) {
+    chrome.tabs.reload(tabId, { bypassCache: true }).catch(error => {
+      console.warn('Clean Reload: リロードスキップ:', error.message);
+    });
+  }
 });
