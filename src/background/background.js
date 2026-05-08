@@ -1,5 +1,3 @@
-// アイコンクリック時にキャッシュ完全クリア+リロードを実行
-// Service Worker登録、CacheStorage、HTTPキャッシュをすべて消去してからリロード
 const BLOCKED_PROTOCOLS = new Set([
   'chrome:',
   'chrome-extension:',
@@ -11,10 +9,9 @@ const BLOCKED_PROTOCOLS = new Set([
   'file:',
 ]);
 
-chrome.action.onClicked.addListener(async (tab) => {
+async function cleanReloadTab(tab) {
   if (!tab?.url) return;
 
-  // 不正 URL / 内部ページ / opaque origin は早期 return
   let origin;
   try {
     const parsed = new URL(tab.url);
@@ -25,9 +22,6 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
   if (!origin || origin === 'null') return;
 
-  // SW 登録と CacheStorage は await して完了させる
-  // 理由: bypassCache は HTTP キャッシュのみバイパスし、SW の fetch 介入はバイパスできない。
-  // 古い SW が生きたままリロードすると caches.match() 経由で古いレスポンスが返る競合を防ぐ。
   await chrome.browsingData.remove(
     { origins: [origin] },
     { cacheStorage: true, serviceWorkers: true }
@@ -35,7 +29,6 @@ chrome.action.onClicked.addListener(async (tab) => {
     console.warn('Clean Reload: SW/CacheStorage 削除スキップ:', error.message);
   });
 
-  // HTTP キャッシュは bypassCache: true で確実に無視されるため fire-and-forget で OK
   chrome.browsingData.removeCache({
     origins: [origin]
   }).catch(error => {
@@ -45,4 +38,63 @@ chrome.action.onClicked.addListener(async (tab) => {
   chrome.tabs.reload(tab.id, { bypassCache: true }).catch(error => {
     console.warn('Clean Reload: リロードスキップ:', error.message);
   });
+}
+
+function notify(message) {
+  chrome.notifications.create({ type: 'basic', iconUrl: 'icons/icon-128.png', title: 'Clean Reload', message });
+}
+
+chrome.action.onClicked.addListener(async (tab) => {
+  notify('リロード中…');
+  await cleanReloadTab(tab);
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'clean-reload-all-tabs',
+    title: '全タブをクリーンリロード',
+    contexts: ['action'],
+  });
+});
+
+chrome.contextMenus.onClicked.addListener(async (info) => {
+  if (info.menuItemId !== 'clean-reload-all-tabs') return;
+  const allTabs = await chrome.tabs.query({});
+  notify(`全 ${allTabs.length} タブをリロード中…`);
+
+  const reloadTargets = [];
+  const origins = new Set();
+  for (const tab of allTabs) {
+    if (!tab?.url) continue;
+    try {
+      const parsed = new URL(tab.url);
+      if (BLOCKED_PROTOCOLS.has(parsed.protocol)) continue;
+      if (!parsed.origin || parsed.origin === 'null') continue;
+      origins.add(parsed.origin);
+      reloadTargets.push(tab.id);
+    } catch {
+      continue;
+    }
+  }
+
+  if (origins.size === 0) return;
+
+  await chrome.browsingData.remove(
+    { origins: [...origins] },
+    { cacheStorage: true, serviceWorkers: true }
+  ).catch(error => {
+    console.warn('Clean Reload: SW/CacheStorage 削除スキップ:', error.message);
+  });
+
+  chrome.browsingData.removeCache({
+    origins: [...origins]
+  }).catch(error => {
+    console.warn('Clean Reload: HTTPキャッシュ削除スキップ:', error.message);
+  });
+
+  for (const tabId of reloadTargets) {
+    chrome.tabs.reload(tabId, { bypassCache: true }).catch(error => {
+      console.warn('Clean Reload: リロードスキップ:', error.message);
+    });
+  }
 });
