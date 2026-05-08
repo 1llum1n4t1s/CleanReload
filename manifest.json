@@ -23,6 +23,7 @@
     "activeTab",
     "browsingData",
     "contextMenus",
+    "notifications",
     "tabs"
   ]
 }

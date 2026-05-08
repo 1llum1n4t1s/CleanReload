@@ -40,7 +40,14 @@ async function cleanReloadTab(tab) {
   });
 }
 
-chrome.action.onClicked.addListener(cleanReloadTab);
+function notify(message) {
+  chrome.notifications.create({ type: 'basic', iconUrl: 'icons/icon-128.png', title: 'Clean Reload', message });
+}
+
+chrome.action.onClicked.addListener(async (tab) => {
+  notify('リロード中…');
+  await cleanReloadTab(tab);
+});
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -53,5 +60,6 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener(async (info) => {
   if (info.menuItemId !== 'clean-reload-all-tabs') return;
   const tabs = await chrome.tabs.query({});
+  notify(`全 ${tabs.length} タブをリロード中…`);
   await Promise.all(tabs.map(cleanReloadTab));
 });
