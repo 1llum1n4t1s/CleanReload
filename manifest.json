@@ -21,6 +21,8 @@
   },
   "permissions": [
     "activeTab",
-    "browsingData"
+    "browsingData",
+    "contextMenus",
+    "tabs"
   ]
 }
