@@ -27,7 +27,6 @@
 - **activeTab** — クリック時にアクティブなタブのみにアクセス
 - **browsingData** — 該当オリジンの Service Worker 登録 / CacheStorage / HTTP キャッシュを削除するために使用
 - **contextMenus** — 右クリックメニューに「全タブをクリーンリロード」を追加
-- **notifications** — リロード開始時のトースト通知を表示
 - **tabs** — 全タブリロード時に全タブのURL情報を取得
 
 ## ライセンス
