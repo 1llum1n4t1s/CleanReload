@@ -17,7 +17,7 @@ jobs:
       PUPPETEER_SKIP_DOWNLOAD: '1'
     steps:
       - name: リポジトリをチェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: バージョンを取得
         id: version
