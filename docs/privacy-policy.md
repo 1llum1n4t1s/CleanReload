@@ -18,6 +18,8 @@
 ### browsingData
 該当オリジンの Service Worker 登録、CacheStorage、HTTP キャッシュを削除するために使用します。閲覧履歴や Cookie などの他のデータには一切アクセスしません。
 
+> Firefox 版では browsingData API の仕様差により、Service Worker / CacheStorage は対象タブのホスト名単位で、HTTP キャッシュはブラウザ全体で削除されます（いずれもクリック操作時のキャッシュ削除のみで、閲覧履歴・Cookie・パスワード等には一切アクセスしません）。
+
 ### contextMenus
 ツールバーのアイコンを右クリックした際に「全タブをクリーンリロード」メニュー項目を表示するために使用します。ページ上のコンテキストメニューには一切追加しません。
 

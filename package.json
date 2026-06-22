@@ -2,19 +2,21 @@
   "name": "clean-reload",
   "version": "1.0.10",
   "type": "commonjs",
-  "description": "ワンクリックで Service Worker・CacheStorage・HTTP キャッシュを完全クリアしてページを再読み込みする Chrome 拡張機能",
+  "description": "ワンクリックで Service Worker・CacheStorage・HTTP キャッシュを完全クリアしてページを再読み込みする Chrome / Firefox 拡張機能",
   "scripts": {
     "generate-icons": "node scripts/generate-icons.js",
     "generate-screenshots": "node webstore/generate-screenshots.js",
-    "build": "npm run generate-icons && npm run generate-screenshots"
+    "build": "pnpm run generate-icons && pnpm run generate-screenshots"
   },
   "devDependencies": {
     "chrome-webstore-upload-cli": "^3.3.0",
     "puppeteer": "^24.43.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "web-ext": "^10.4.0"
   },
   "keywords": [
     "chrome-extension",
+    "firefox-extension",
     "hard-reload",
     "super-reload",
     "cache-bypass"

@@ -4,6 +4,11 @@ icons/icon-*.png
 temp-build/
 *.zip
 
+# Firefox AMO ビルド成果物
+firefox-build/
+web-ext-artifacts/
+*.xpi
+
 # 秘密情報・環境変数
 .env
 .env.*

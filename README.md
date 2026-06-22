@@ -1,6 +1,6 @@
 # Clean Reload
 
-ワンクリックでキャッシュを完全クリアしてページを再読み込みするChrome拡張機能です。
+ワンクリックでキャッシュを完全クリアしてページを再読み込みする Chrome / Firefox 拡張機能です。
 
 ## 機能
 
@@ -16,9 +16,22 @@
 
 ツールバーのアイコンを **右クリック** →「**全タブをクリーンリロード**」で、開いている全タブに対して一括でキャッシュクリア＋リロードを実行します。
 
+## インストール
+
+### Chrome / Edge
+Chrome Web Store からインストールします。
+
+### Firefox (142 以降)
+[addons.mozilla.org](https://addons.mozilla.org/) で「Clean Reload」を検索してインストールします。
+
+> **Firefox 版での挙動の違い**
+> Firefox の browsingData API は Chrome と仕様が異なります。
+> - **Service Worker / CacheStorage**: 対象タブのホスト名単位で削除します（Firefox は origin 単位の精密削除に未対応のため、ホスト名単位にフォールバック）。
+> - **HTTP キャッシュ**: Firefox の `removeCache` はオリジンを絞り込めない仕様のため、Firefox 全体の HTTP キャッシュをクリアします（Chrome 版は該当オリジンのみ）。
+
 ## 使い方
 
-1. Chrome Web Storeから拡張機能をインストール
+1. ストアから拡張機能をインストール
 2. リロードしたいページでツールバーのアイコンをクリック（単一タブ）
 3. 全タブを一括リロードしたい場合はアイコンを右クリック →「全タブをクリーンリロード」
 

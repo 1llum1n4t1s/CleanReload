@@ -1,4 +1,4 @@
-name: Publish to Chrome Web Store
+name: Publish to Chrome Web Store + Firefox AMO
 
 on:
   push:
@@ -38,14 +38,19 @@ jobs:
           fi
           echo "✅ ブランチ名と manifest バージョン一致: $expected"
 
+      - name: pnpm セットアップ
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1  # v4
+        with:
+          version: 11
+
       - name: Node セットアップ
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: 依存インストール
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: package.json バージョンも一致するか確認
         env:
@@ -74,7 +79,7 @@ jobs:
           CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
           CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
         run: |
-          npx chrome-webstore-upload-cli upload \
+          pnpm exec chrome-webstore-upload-cli upload \
             --source clean-reload.zip \
             --extension-id "$CWS_EXTENSION_ID" \
             --client-id "$CWS_CLIENT_ID" \
@@ -82,3 +87,101 @@ jobs:
             --refresh-token "$CWS_REFRESH_TOKEN" \
             --auto-publish
           echo "🎉 Chrome Web Store への公開リクエストを送信したよ〜"
+
+  publish-firefox:
+    name: Firefox AMO に submission
+    runs-on: ubuntu-latest
+    # Chrome publish が失敗（同 version 重複 upload 等）しても Firefox AMO は独立して submit する。
+    # cancelled() のときだけ skip。
+    if: ${{ success() || failure() }}
+    env:
+      # CI では generate-icons（sharp）しか実行しないので puppeteer の Chromium DL は不要
+      PUPPETEER_SKIP_DOWNLOAD: '1'
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v6
+
+      - name: ブランチ名とバージョンの整合性を確認
+        env:
+          BRANCH_VERSION: ${{ github.ref_name }}
+        run: |
+          version=$(grep -oP '(?<="version": ")[^"]+' manifest.firefox.json)
+          expected="release/${version}"
+          if [ "$BRANCH_VERSION" != "$expected" ]; then
+            echo "::error::ブランチ名 ($BRANCH_VERSION) と manifest.firefox.json のバージョン ($version) が一致しません。期待値: $expected"
+            exit 1
+          fi
+          echo "✅ ブランチ名と manifest.firefox バージョン一致: $expected"
+
+      - name: pnpm セットアップ
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1  # v4
+        with:
+          version: 11
+
+      - name: Node セットアップ
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: 依存インストール
+        run: pnpm install --frozen-lockfile
+
+      - name: アイコン生成
+        run: node scripts/generate-icons.js
+
+      - name: Firefox 用ソースディレクトリを構築
+        # manifest.firefox.json を manifest.json として配置し、icons / src を同梱。
+        # CleanReload は _locales を使わない（name / description 直書き）ので _locales のコピーは不要。
+        # background は manifest.firefox.json 側で scripts 配列にしてある（Firefox MV3 は service_worker 非対応）。
+        # web-ext sign は zip ではなく source-dir を受け取り自身で xpi を構築するため source dir のまま渡す。
+        run: |
+          mkdir -p firefox-build
+          cp manifest.firefox.json firefox-build/manifest.json
+          cp -r icons firefox-build/
+          cp -r src firefox-build/
+          find firefox-build \( -name "*.DS_Store" -o -name "*.swp" -o -name "*~" \) -delete
+          echo "🦊 firefox-build 構築完了"
+          ls -la firefox-build/
+
+      - name: web-ext lint（AMO validator 相当チェック）
+        run: pnpm exec web-ext lint --source-dir=firefox-build
+
+      - name: Firefox AMO に submit (web-ext sign --channel=listed)
+        # web-ext 10+ では submission API がデフォルト動作。--channel=listed で AMO 公開（人間レビュー入り）。
+        # AMO API キー（JWT issuer / secret）は GitHub Secrets:
+        #   gh secret set AMO_JWT_ISSUER / gh secret set AMO_JWT_SECRET
+        env:
+          WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then
+            echo "::error::AMO_JWT_ISSUER / AMO_JWT_SECRET の GitHub Secrets が未設定です"
+            echo "  JWT 発行: https://addons.mozilla.org/ja/developers/addon/api/key/"
+            echo "  登録: gh secret set AMO_JWT_ISSUER / gh secret set AMO_JWT_SECRET"
+            exit 1
+          fi
+          # web-ext sign --channel=listed は AMO の auto-sign を待たずに約 15 分で
+          # "Approval: timeout exceeded" を返して exit 1 になる既知挙動（submission 自体は受理済み）。
+          # timeout / 同 version 重複は warning 化して CI を green に保つ。それ以外の exit 1 は fail。
+          set +e
+          pnpm exec web-ext sign \
+            --source-dir=firefox-build \
+            --artifacts-dir=web-ext-artifacts \
+            --channel=listed \
+            --amo-metadata=.amo-metadata.json 2>&1 | tee /tmp/web-ext.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          if [ "$rc" -ne 0 ]; then
+            if grep -q "Approval: timeout exceeded" /tmp/web-ext.log; then
+              echo "::warning::web-ext sign が timeout exceeded で exit 1 を返したが submission は AMO に受理済み。CI green 化のため exit 0 扱いに変換します"
+            elif grep -qiE "version (already exists|conflict)" /tmp/web-ext.log; then
+              echo "::warning::AMO に既に同 version が存在するため version conflict で fail。CI green 化のため exit 0 扱いに変換します"
+            else
+              echo "::error::web-ext sign が timeout exceeded / version conflict 以外の理由で失敗しました (rc=$rc)。ログ確認要"
+              exit "$rc"
+            fi
+          fi
+          echo "🦊 Firefox AMO への submission 送信完了（レビュー待ち）"
+          echo "🔗 AMO Developer Hub: https://addons.mozilla.org/developers/"
+          echo "⏰ レビュー結果は通常 1〜数日でメール通知"
