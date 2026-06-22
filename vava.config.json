@@ -1,0 +1,21 @@
+{
+  "_comment": "/vava スキル (~/.claude/skills/vava/) のスクリプトに渡すプロジェクト固有設定。update-amo-listing.mjs が CWD の本ファイルの amo ブロックを読んで AMO API v5 へ listing を PATCH する。",
+  "amo": {
+    "slug": "clean-reload",
+    "categories": ["other"],
+    "homepage": "https://github.com/1llum1n4t1s/CleanReload",
+    "supportUrl": "https://github.com/1llum1n4t1s/CleanReload/issues",
+    "defaultName": {
+      "ja": "Clean Reload",
+      "en-US": "Clean Reload"
+    },
+    "listingFiles": {
+      "ja": "webstore/store-listing.firefox.ja.txt",
+      "en-US": "webstore/store-listing.firefox.en.txt"
+    },
+    "privacyFiles": {
+      "ja": "docs/privacy-policy.md",
+      "en-US": "docs/privacy-policy.en.md"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 ============================================================
 Firefox AMO 掲載情報（コピペ用 / 日本語）
 ※ Chrome Web Store 用は webstore/store-listing.txt を参照
+※ 英語版は webstore/store-listing.firefox.en.txt を参照
 ※ Firefox 版は browser_specific_settings.gecko で動作要件を Firefox 142 以降に設定
 ============================================================
 

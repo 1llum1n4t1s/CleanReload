@@ -1,0 +1,57 @@
+============================================================
+Firefox AMO Listing (English)
+* For Chrome Web Store, see webstore/store-listing.txt
+* For Japanese, see webstore/store-listing.firefox.ja.txt
+* The Firefox edition sets a minimum version of Firefox 142 via browser_specific_settings.gecko
+============================================================
+
+■ Name (50 chars max)
+Clean Reload
+
+■ Summary (250 chars max)
+A super-reload extension that clears the Service Worker, CacheStorage, and HTTP cache in one click, then reloads the page. It resets even the Service Worker cache that a normal hard reload (Ctrl+Shift+R) leaves behind. Zero external transmission, zero data collection.
+
+■ Description (16,000 chars max)
+A one-click extension that fully clears the cache and reloads the page.
+Handy for web development and debugging, where you need to bypass stale cached files and see the latest state.
+
+■ Features
+
+- One-click deep clean reload
+  Just click the toolbar icon to delete the Service Worker registration, CacheStorage, and HTTP cache, then reload the page.
+  It resets even the Service Worker cache and CacheStorage that a normal hard reload (Ctrl+Shift+R) leaves behind.
+
+- Clean-reload all tabs at once
+  Right-click the toolbar icon and choose "Clean-reload all tabs" to clear the cache and reload every open tab.
+
+- Lightweight & minimal permissions
+  No background data collection and no external communication of any kind.
+
+- Who it is for
+  - Web developers: instantly fix the "my CSS/JS change is not showing because of the cache" problem
+  - While debugging: always test against the freshest resources
+  - Everyone: quickly refresh a page that looks broken
+
+■ How to use
+
+1. Install the add-on
+2. On the page you want to reload, click the toolbar icon (single tab)
+3. To reload every tab at once, right-click the icon and choose "Clean-reload all tabs"
+
+■ Behavior on Firefox (important)
+
+Firefox's browsingData API differs from Chrome's, so this extension behaves as follows on Firefox:
+
+- Service Worker registration / CacheStorage: removed per the target tab's hostname (origin-scoped precise removal is not supported by Firefox, so it falls back to hostname scope).
+- HTTP cache: because Firefox's removeCache API cannot be scoped to a specific origin, clicking clears Firefox's entire HTTP cache (the Chrome edition clears only the current origin).
+
+In all cases the page is reloaded bypassing the HTTP cache afterward. Since the click is an explicit user action, the behavior above is within the intended reset.
+
+■ Privacy
+Everything runs locally in the browser; there is no communication with external servers and no collection of personal data. No remote code is loaded. See docs/privacy-policy.en.md for details.
+
+■ License
+MIT License
+
+■ Requirements
+Firefox 142 or later.

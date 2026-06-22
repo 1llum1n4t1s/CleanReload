@@ -65,8 +65,12 @@ CleanReload/
 │   ├── *.html               # 掲載画像テンプレート
 │   ├── generate-screenshots.js  # HTML→PNG変換（puppeteer、scripts/ ではなくここ）
 │   ├── store-listing.txt    # Chrome ストア説明文
-│   └── store-listing.firefox.txt  # Firefox AMO 説明文
-├── docs/privacy-policy.md   # ストア申請に必須のプライバシーポリシー
+│   ├── store-listing.firefox.ja.txt  # Firefox AMO 説明文（日本語）
+│   └── store-listing.firefox.en.txt  # Firefox AMO 説明文（英語）
+├── docs/
+│   ├── privacy-policy.md    # プライバシーポリシー（日本語）
+│   └── privacy-policy.en.md # プライバシーポリシー（英語、AMO listing 用）
+├── vava.config.json         # /vava スキル用設定（amo.slug / listingFiles 等）
 └── .github/workflows/publish.yml  # Chrome + Firefox 自動公開ワークフロー
 ```
 
@@ -87,7 +91,7 @@ Firefox 版は **Chrome と同じ `src/` を共有**し、`manifest.firefox.json
 ### browsingData の仕様差（Firefox の制約）
 Firefox の browsingData は Chrome と挙動が異なるため、`clearCacheData()` で `isFirefox` 分岐する:
 - **`RemovalOptions.origins` は Firefox 未対応**（MDN BCD: version_added=false）。Firefox では Service Worker / CacheStorage を `hostnames`（FF77+）で絞って削除し、ダメなら SW 全消しにフォールバック。
-- **`removeCache` は options を無視して常に全 HTTP キャッシュを消す**（Firefox 仕様）。よって Firefox では HTTP キャッシュは**ブラウザ全体**がクリアされる（Chrome は origin 単位）。ストア説明文（`store-listing.firefox.txt`）と README にこの挙動差を明記済み。
+- **`removeCache` は options を無視して常に全 HTTP キャッシュを消す**（Firefox 仕様）。よって Firefox では HTTP キャッシュは**ブラウザ全体**がクリアされる（Chrome は origin 単位）。ストア説明文（`store-listing.firefox.{ja,en}.txt`）と README にこの挙動差を明記済み。
 - `tabs.reload({bypassCache})` / `action.*` バッジ / `contextMenus contexts:['action']` は Firefox でも動作（action API は FF109+）。
 
 ### manifest.firefox.json の不変条件
@@ -111,6 +115,17 @@ Firefox の browsingData は Chrome と挙動が異なるため、`clearCacheDat
 
 ### CI（publish.yml の `publish-firefox` job）
 `release/x.y.z` push で Chrome `publish` job と**並列・独立**に実行（`if: success() || failure()` で Chrome 失敗時も submit）。GitHub Secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` を使用。firefox-build 構築 → `web-ext lint` → `web-ext sign` の順。
+
+### AMO listing（説明文）の更新は API 経由（スクショは手動）
+listing の name / summary / description / homepage / support_url / categories / privacy_policy は **AMO API v5 で PATCH 可能**。`/vava` スキルの `~/.claude/skills/vava/scripts/update-amo-listing.mjs` が `vava.config.json` の `amo` ブロック + `store-listing.firefox.{ja,en}.txt` + `docs/privacy-policy{,.en}.md` を読んで JWT 認証で送る。手動実行:
+```bash
+# AMO 認証は secrets.json の amo ブロックから env で渡す（値はログ/コミットに残さない）
+AMO_JWT_ISSUER=<jwt_issuer> AMO_JWT_SECRET=<jwt_secret> \
+  node ~/.claude/skills/vava/scripts/update-amo-listing.mjs --dry-run   # 確認
+AMO_JWT_ISSUER=<jwt_issuer> AMO_JWT_SECRET=<jwt_secret> \
+  node ~/.claude/skills/vava/scripts/update-amo-listing.mjs             # 本番
+```
+**スクリーンショットだけは API 非対応** → AMO Developer Hub から手動アップロード（`webstore/images/*-1280x800.png`）。
 
 ## 制約事項
 
