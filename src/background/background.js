@@ -17,7 +17,6 @@ const BLOCKED_PROTOCOLS = new Set([
   'data:',
   'javascript:',
   'blob:',
-  'file:',
 ]);
 
 // 渡されたオリジン群（Chrome）/ ホスト名群（Firefox）の Service Worker 登録・CacheStorage・
@@ -67,9 +66,13 @@ async function cleanReloadTab(tab) {
   } catch {
     return;
   }
-  if (!origin || origin === 'null') return;
 
-  await clearCacheData([origin], [hostname]);
+  // file: など opaque origin（origin === 'null'）は SW / CacheStorage を持てず、
+  // browsingData の origin/hostname 絞り込みも効かない。キャッシュ削除はスキップし、
+  // HTTP キャッシュ層をバイパスするリロードだけを行う。
+  if (origin && origin !== 'null') {
+    await clearCacheData([origin], [hostname]);
+  }
 
   api.tabs.reload(tab.id, { bypassCache: true }).catch(error => {
     console.warn('Clean Reload: リロードスキップ:', error.message);
@@ -108,18 +111,22 @@ api.contextMenus.onClicked.addListener(async (info) => {
     try {
       const parsed = new URL(tab.url);
       if (BLOCKED_PROTOCOLS.has(parsed.protocol)) continue;
-      if (!parsed.origin || parsed.origin === 'null') continue;
-      origins.add(parsed.origin);
-      hostnames.add(parsed.hostname);
+      // file: など opaque origin はキャッシュ削除対象から外すが、bypassCache リロードはする
+      if (parsed.origin && parsed.origin !== 'null') {
+        origins.add(parsed.origin);
+        hostnames.add(parsed.hostname);
+      }
       reloadTargets.push(tab.id);
     } catch {
       continue;
     }
   }
 
-  if (origins.size === 0) return;
+  if (reloadTargets.length === 0) return;
 
-  await clearCacheData([...origins], [...hostnames]);
+  if (origins.size > 0) {
+    await clearCacheData([...origins], [...hostnames]);
+  }
 
   for (const tabId of reloadTargets) {
     api.tabs.reload(tabId, { bypassCache: true }).catch(error => {

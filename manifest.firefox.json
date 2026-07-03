@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Clean Reload",
   "description": "ワンクリックでキャッシュを完全クリアしてページを再読み込みします。",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "browser_specific_settings": {
     "gecko": {
       "id": "{a4a7df25-9281-44f6-9d06-5959599c6473}",

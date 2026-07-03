@@ -129,7 +129,8 @@ AMO_JWT_ISSUER=<jwt_issuer> AMO_JWT_SECRET=<jwt_secret> \
 
 ## 制約事項
 
-- 内部・opaque origin ページ（`chrome:`, `chrome-extension:`, `moz-extension:`, `edge:`, `about:`, `data:`, `javascript:`, `blob:`, `file:`）は `BLOCKED_PROTOCOLS` で早期 return。`new URL()` の throw も try-catch で吸収
+- 内部・危険プロトコルのページ（`chrome:`, `chrome-extension:`, `moz-extension:`, `edge:`, `about:`, `data:`, `javascript:`, `blob:`）は `BLOCKED_PROTOCOLS` で早期 return。`new URL()` の throw も try-catch で吸収
+- **`file:`（ローカル HTML）は許可**する。ただし opaque origin（`origin === 'null'`）で SW / CacheStorage を持てず `browsingData` の origins/hostnames 絞り込みも効かないため、キャッシュ削除はスキップし `tabs.reload({bypassCache:true})` だけ実行する（HTTP キャッシュ層のみバイパス）。全タブ版も同様に file: タブを reloadTargets には含めつつ origins/hostnames Set からは外す
 - SW/CacheStorage 削除は `await` で完了を待つ（`bypassCache` は HTTP キャッシュ層のみバイパスし SW の fetch 介入はバイパスできないため、古い SW の race を防ぐ必要がある）
 - HTTP キャッシュ削除と `tabs.reload({bypassCache:true})` は `.catch()` でログするだけの fire-and-forget（初版から継続する設計判断）
 - API は `api`（`browser ?? chrome`）経由で呼ぶ。Firefox の browsingData 仕様差は `clearCacheData()` の `isFirefox` 分岐に集約する（個別呼び出し箇所で分岐を散らさない）
