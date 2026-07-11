@@ -9,7 +9,7 @@
     "build": "pnpm run generate-icons && pnpm run generate-screenshots"
   },
   "devDependencies": {
-    "chrome-webstore-upload-cli": "^3.3.0",
+    "chrome-webstore-upload-cli": "^4.0.1",
     "puppeteer": "^25.3.0",
     "sharp": "^0.35.3",
     "web-ext": "^10.5.0"
