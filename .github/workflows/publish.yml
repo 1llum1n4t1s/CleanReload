@@ -74,21 +74,18 @@ jobs:
 
       - name: Chrome Web Store にアップロード & 公開
         env:
-          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
-          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
-          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
-          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
         run: |
           # 同 version 再 push（release ブランチ再 push 等）では既にアップロード/審査中で
           # cli が exit 1 になる。これは無害な重複なので warning 化して CI を green に保つ。
+          # v4 以降はコマンド省略（upload/publish 未指定）で upload+publish が自動実行される。
           set +e
-          pnpm exec chrome-webstore-upload upload \
-            --source clean-reload.zip \
-            --extension-id "$CWS_EXTENSION_ID" \
-            --client-id "$CWS_CLIENT_ID" \
-            --client-secret "$CWS_CLIENT_SECRET" \
-            --refresh-token "$CWS_REFRESH_TOKEN" \
-            --auto-publish 2>&1 | tee /tmp/cws.log
+          pnpm exec chrome-webstore-upload \
+            --source clean-reload.zip 2>&1 | tee /tmp/cws.log
           rc=${PIPESTATUS[0]}
           set -e
           if [ "$rc" -ne 0 ]; then
