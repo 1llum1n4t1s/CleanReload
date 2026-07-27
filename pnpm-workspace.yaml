@@ -2,3 +2,13 @@
 allowBuilds:
   puppeteer: true
   sharp: true
+
+# 推移的依存の脆弱性対応（いずれも devDependency の web-ext 配下、上流未修正のため override で解消）
+overrides:
+  # GHSA-xcpc-8h2w-3j85: 細工 ZIP で 4GB メモリ確保（web-ext > firefox-profile）
+  adm-zip: '>=0.6.0'
+  # GHSA-395f-4hp3-45gv: parse() の二次計算量による DoS（web-ext > fx-runner）
+  shell-quote: '>=1.8.5'
+  # fast-uri のバックスラッシュ由来 host confusion（web-ext > addons-linter > ajv）
+  # ajv の依存範囲 ^3.0.1 内に収めるため 3 系に固定する
+  fast-uri: '^3.1.4'
