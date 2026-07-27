@@ -26,6 +26,16 @@ pnpm run build              # 上記2つを順次実行
 - テスト・Lint・フォーマッタは**未定義**。`pnpm test` などは存在しない。
 - 拡張機能本体の開発には `sharp` しか不要。`generate-screenshots` はストア画像用途で、普段のコード編集では実行しなくてよい。
 
+### 依存の overrides / patch（[pnpm-workspace.yaml](pnpm-workspace.yaml)）
+
+devDependency の `web-ext` 配下に出た脆弱性を、上流が未修正のため `overrides` で解消している（`adm-zip` / `shell-quote` / `fast-uri` / `brace-expansion`）。拡張機能の配布物には含まれない開発時専用の依存。
+
+`brace-expansion` は修正版が **5.0.8 のみ**（1.x〜4.x に patch なし）で、唯一の利用者 `minimatch@3` が `require('brace-expansion')` を関数として呼ぶ一方、5.x は named export の `{ expand }` になった。そのため [patches/minimatch@3.1.5.patch](patches/minimatch@3.1.5.patch) で両形式を受け付ける 1 行の interop シムを当てている。
+
+- pnpm 11 は `package.json` の `pnpm` フィールドを**読まない**。overrides / patchedDependencies は `pnpm-workspace.yaml` に書く。
+- `patchedDependencies` のキーは `minimatch@3.1.5` と exact version 固定。**minimatch が 3.1.6 以降へ上がると `pnpm install` が patch 未適用で失敗する**。その場合は `pnpm patch minimatch@<新version>` で同じ 1 行シムを当て直し、キーを更新する。
+- 上流（eslint / addons-linter）が minimatch 10 系へ移行したら、この override と patch は両方とも削除してよい。
+
 ## 開発時の読み込み
 
 1. `pnpm install && pnpm run generate-icons` でアイコン PNG を生成（`icons/icon-*.png` は gitignore なので初回必須）

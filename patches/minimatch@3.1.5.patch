@@ -1,0 +1,17 @@
+diff --git a/minimatch.js b/minimatch.js
+index 2e4a058a130dceebf83a7bd435f5d22b765ac836..a105453ad146b5b6e24853afb6ceb78265160395 100644
+--- a/minimatch.js
++++ b/minimatch.js
+@@ -7,7 +7,11 @@ var path = (function () { try { return require('path') } catch (e) {}}()) || {
+ minimatch.sep = path.sep
+ 
+ var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
+-var expand = require('brace-expansion')
++// brace-expansion 1.x/2.x は module.exports が関数、5.x 以降は named export の
++// { expand } になる。5.0.8 で修正された GHSA-mh99-v99m-4gvg を取り込むため
++// override で 5.x を入れているので、両方の形を受け付ける。
++var braceExpansion = require('brace-expansion')
++var expand = typeof braceExpansion === 'function' ? braceExpansion : braceExpansion.expand
+ 
+ var plTypes = {
+   '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},

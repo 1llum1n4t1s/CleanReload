@@ -12,3 +12,12 @@ overrides:
   # fast-uri のバックスラッシュ由来 host confusion（web-ext > addons-linter > ajv）
   # ajv の依存範囲 ^3.0.1 内に収めるため 3 系に固定する
   fast-uri: '^3.1.4'
+  # GHSA-mh99-v99m-4gvg: 連鎖ブレース展開でメモリ枯渇（web-ext > ... > minimatch）
+  # 修正版は 5.0.8 のみ（1.x/2.x/3.x/4.x に patch は出ていない）。唯一の利用者である
+  # minimatch@3 は brace-expansion を callable として require するため、下の
+  # patchedDependencies で named export 版も受け付ける interop シムを当てている。
+  brace-expansion: '^5.0.8'
+
+patchedDependencies:
+  # minimatch@3 を brace-expansion 5.x（named export）互換にする 1 行シム
+  minimatch@3.1.5: patches/minimatch@3.1.5.patch
