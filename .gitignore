@@ -30,3 +30,6 @@ Thumbs.db
 .vscode/
 .idea/
 .serena/
+
+# wrangler のローカル状態キャッシュ (web/ のデプロイ時に生成される)
+web/.wrangler/
