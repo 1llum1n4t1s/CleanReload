@@ -9,7 +9,7 @@ Firefox AMO Listing (English)
 Clean Reload
 
 ■ Summary (250 chars max)
-A super-reload extension that clears the Service Worker, CacheStorage, and HTTP cache in one click, then reloads the page. It resets even the Service Worker cache that a normal hard reload (Ctrl+Shift+R) leaves behind. Zero external transmission, zero data collection.
+A super-reload extension that clears Service Worker, CacheStorage, and HTTP cache before reloading. It can also force all background tabs to sleep. Zero external transmission and zero data collection.
 
 ■ Description (16,000 chars max)
 A one-click extension that fully clears the cache and reloads the page.
@@ -24,6 +24,9 @@ Handy for web development and debugging, where you need to bypass stale cached f
 - Clean-reload all tabs at once
   Right-click the toolbar icon and choose "Clean-reload all tabs" to clear the cache and reload every open tab.
 
+- Force all background tabs to sleep
+  Right-click the toolbar icon and choose the background-tab sleep command to release inactive tabs from memory. Tabs remain open and reload automatically when selected. The active tab in each window is excluded.
+
 - Lightweight & minimal permissions
   No background data collection and no external communication of any kind.
 
@@ -37,6 +40,7 @@ Handy for web development and debugging, where you need to bypass stale cached f
 1. Install the add-on
 2. On the page you want to reload, click the toolbar icon (single tab)
 3. To reload every tab at once, right-click the icon and choose "Clean-reload all tabs"
+4. To release background tabs from memory, right-click the icon and choose the background-tab sleep command
 
 ■ Behavior on Firefox (important)
 

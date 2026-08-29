@@ -96,9 +96,29 @@ api.runtime.onInstalled.addListener(() => {
     title: '全タブをクリーンリロード',
     contexts: ['action'],
   });
+  api.contextMenus.create({
+    id: 'discard-all-background-tabs',
+    title: '全バックグラウンドタブを強制スリープ',
+    contexts: ['action'],
+  });
 });
 
 api.contextMenus.onClicked.addListener(async (info) => {
+  if (info.menuItemId === 'discard-all-background-tabs') {
+    const tabs = await api.tabs.query({ active: false, discarded: false });
+    const discardTargets = tabs.filter(tab => Number.isInteger(tab.id));
+    if (discardTargets.length === 0) return;
+
+    showBadge('ZZZ');
+
+    await Promise.all(discardTargets.map(tab =>
+      api.tabs.discard(tab.id).catch(error => {
+        console.warn('Clean Reload: スリープスキップ:', error.message);
+      })
+    ));
+    return;
+  }
+
   if (info.menuItemId !== 'clean-reload-all-tabs') return;
   const allTabs = await api.tabs.query({});
   showBadge('ALL');
