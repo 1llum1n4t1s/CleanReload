@@ -8,6 +8,8 @@ const OUTPUT_DIR = path.join(__dirname, 'images');
 
 // レンダリング安定化のための待機ミリ秒（font/画像ロードのフォールバック）
 const RENDER_SETTLE_MS = 500;
+// 大判画像の capture が低速な環境でも CDP 呼び出しを途中で打ち切らない
+const SCREENSHOT_PROTOCOL_TIMEOUT_MS = 300000;
 // 同時に開く Chromium ページ数の上限（CI ランナーの OOM 回避）
 const CONCURRENCY = 2;
 
@@ -67,7 +69,7 @@ async function main() {
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    protocolTimeout: 120000
+    protocolTimeout: SCREENSHOT_PROTOCOL_TIMEOUT_MS
   });
 
   let results;
