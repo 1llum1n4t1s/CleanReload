@@ -89,7 +89,7 @@ jobs:
           rc=${PIPESTATUS[0]}
           set -e
           if [ "$rc" -ne 0 ]; then
-            if grep -qiE "ITEM_NOT_UPDATABLE|pending review|ready to publish|cannot be updated|already (published|exists|uploaded)|currently in review|in_review|version already|DUPLICATE_VERSION" /tmp/cws.log; then
+            if grep -qiE "ITEM_NOT_UPDATABLE|pending review|ready to publish|cannot be updated|already (published|exists|uploaded)|currently in review|item that is in review|in_review|version already|DUPLICATE_VERSION" /tmp/cws.log; then
               echo "::warning::Chrome Web Store に同 version が既にアップロード/公開済み。CI green 化のため exit 0 扱いに変換します"
             else
               echo "::error::chrome-webstore-upload が同 version 重複以外の理由で失敗しました (rc=$rc)。ログ確認要"
