@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # GitHub Actions を SHA 固定で自動更新（サプライチェーン攻撃対策）
+  # GitHub Actions を既存の tag / SHA 固定方式のまま自動更新
   - package-ecosystem: github-actions
     directory: /
     schedule:
