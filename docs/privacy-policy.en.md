@@ -21,10 +21,10 @@ Used to delete the Service Worker registration, CacheStorage, and HTTP cache of 
 > On Firefox, due to differences in the browsingData API, the Service Worker / CacheStorage are removed per the target tab's hostname, and the HTTP cache is cleared for the whole browser (in both cases only cache is deleted on click; browsing history, cookies, passwords, etc. are never accessed).
 
 ### contextMenus
-Used to show the "Clean-reload all tabs" item when you right-click the toolbar icon. Nothing is added to the in-page context menu.
+Used to show the clean-reload-all-tabs and force-background-tabs-to-sleep commands when you right-click the toolbar icon. Nothing is added to the in-page context menu.
 
 ### tabs
-Used by the "Clean-reload all tabs" feature to read the URLs of all tabs and clear the cache for each origin. The retrieved URL information is discarded after processing and is never stored or transmitted externally.
+Used by the clean-reload-all-tabs feature to read tab URLs and clear each origin's cache, and by the force-background-tabs-to-sleep feature to release inactive tabs from memory. Retrieved URL information is discarded after processing and is never stored or transmitted externally.
 
 ## External Communication
 
