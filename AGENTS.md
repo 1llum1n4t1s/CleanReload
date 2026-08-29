@@ -1,10 +1,10 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code when working in this repository.
+このファイルは、このリポジトリで作業するエージェント向けのコマンド・検証手順・制約を定める。システム構造と設計判断の正本は [DESIGN.md](DESIGN.md) を参照する。
 
 ## プロジェクト概要
 
-Clean Reload — ワンクリックでキャッシュ完全クリア+リロード（スーパーリロード）を実行する Chrome / Firefox 拡張機能（Manifest V3）。
+Clean Reload — ワンクリックのキャッシュ完全クリア+リロード（スーパーリロード）と、右クリックメニューからの全タブ一括リロード・全バックグラウンドタブ強制スリープを提供する Chrome / Firefox 拡張機能（Manifest V3）。
 
 リロード時の処理（Chrome は origin スコープ）:
 1. Service Worker 登録を削除（`browsingData.remove({origins}, {serviceWorkers: true})`）
@@ -62,6 +62,7 @@ devDependency の `web-ext` 配下に出た脆弱性を、上流が未修正の�
 
 ```
 CleanReload/
+├── DESIGN.md               # 現在実装の構造・責務・設計判断の正本
 ├── manifest.json            # Chrome 用 manifest（background.service_worker）
 ├── manifest.firefox.json    # Firefox 用 manifest（background.scripts + gecko 設定）
 ├── .amo-metadata.json       # AMO 提出メタ（categories + license: MIT）
@@ -81,6 +82,7 @@ CleanReload/
 │   ├── privacy-policy.md    # プライバシーポリシー（日本語）
 │   └── privacy-policy.en.md # プライバシーポリシー（英語、AMO listing 用）
 ├── vava.config.json         # /vava スキル用設定（amo.slug / listingFiles 等）
+├── web/                     # cleanreload.kagayoi.com の独立した静的 LP Worker
 └── .github/workflows/publish.yml  # Chrome + Firefox 自動公開ワークフロー
 ```
 
@@ -89,7 +91,7 @@ CleanReload/
 ## アーキテクチャ
 
 - **manifest.json / manifest.firefox.json** — 拡張機能の定義。権限は `activeTab` + `browsingData` + `contextMenus` + `tabs`。popupなし（アイコンクリックで即実行）。差分は **background のみ**（Chrome=`service_worker` / Firefox=`scripts` 配列）と Firefox 側の `browser_specific_settings.gecko`（gecko id + `strict_min_version: 142.0` + `data_collection_permissions`）。
-- **src/background/background.js** — 唯一のランタイムコード。Chrome / Firefox 共通の単一ファイル。`api.action.onClicked` で、まず `clearCacheData()` を **await** して SW 登録と CacheStorage の削除を確実に待機（SW が fetch を横取りする race を排除）、続けて `tabs.reload({bypassCache: true})` を発火。アイコン右クリックの「全タブをクリーンリロード」は `contextMenus` で実装。ページ注入を使わないため制限ページでも同じ挙動で動く。
+- **src/background/background.js** — 唯一のランタイムコード。Chrome / Firefox 共通の単一ファイル。`api.action.onClicked` で、まず `clearCacheData()` を **await** して SW 登録と CacheStorage の削除を確実に待機（SW が fetch を横取りする race を排除）、続けて `tabs.reload({bypassCache: true})` を発火。アイコン右クリックの「全タブをクリーンリロード」と、非アクティブかつ未破棄のタブへ `tabs.discard()` を実行する「全バックグラウンドタブを強制スリープ」は `contextMenus` で実装する。ページ注入は使わない。
   - **`clearCacheData(origins, hostnames)`** が Chrome / Firefox の browsingData 仕様差を吸収する唯一の分岐点。詳細は §Firefox AMO 対応。
 - **icons/icon.svg** — マスターアイコン。ここを変更すれば `generate-icons.js` で全サイズ生成。
 - **webstore/*.html** — ストア掲載画像のHTMLテンプレート。`generate-screenshots.js`（Puppeteer）でPNGに変換。
@@ -143,4 +145,5 @@ AMO_JWT_ISSUER=<jwt_issuer> AMO_JWT_SECRET=<jwt_secret> \
 - **`file:`（ローカル HTML）は許可**する。ただし opaque origin（`origin === 'null'`）で SW / CacheStorage を持てず `browsingData` の origins/hostnames 絞り込みも効かないため、キャッシュ削除はスキップし `tabs.reload({bypassCache:true})` だけ実行する（HTTP キャッシュ層のみバイパス）。全タブ版も同様に file: タブを reloadTargets には含めつつ origins/hostnames Set からは外す
 - SW/CacheStorage 削除は `await` で完了を待つ（`bypassCache` は HTTP キャッシュ層のみバイパスし SW の fetch 介入はバイパスできないため、古い SW の race を防ぐ必要がある）
 - HTTP キャッシュ削除と `tabs.reload({bypassCache:true})` は `.catch()` でログするだけの fire-and-forget（初版から継続する設計判断）
+- 強制スリープは `tabs.query({ active: false, discarded: false })` の結果だけを対象にする。各ウィンドウのアクティブタブはブラウザ仕様上破棄できないため対象外とし、個別失敗は残りのタブ処理を止めず警告へ記録する
 - API は `api`（`browser ?? chrome`）経由で呼ぶ。Firefox の browsingData 仕様差は `clearCacheData()` の `isFirefox` 分岐に集約する（個別呼び出し箇所で分岐を散らさない）
