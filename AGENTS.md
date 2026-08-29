@@ -45,10 +45,13 @@ devDependency の `web-ext` 配下に出た脆弱性を、上流が未修正の�
 ## パッケージング
 
 ```powershell
-.\zip.ps1                  # Windows
-./zip.sh                   # Linux/macOS
+pnpm install --frozen-lockfile
+pnpm run generate-icons
+Compress-Archive -Path manifest.json,icons,src -DestinationPath clean-reload.zip -Force
 ```
 `clean-reload.zip` に `manifest.json` + `icons/` + `src/` のみ含める（`node_modules`, `webstore/`, `scripts/` は除外）。
+
+`zip.ps1` / `zip.sh` は現在 `npm install` を呼ぶため、pnpm の overrides / patch を使う本リポジトリのリリース検証には使用しない。正式な公開パッケージは `.github/workflows/publish.yml` と同じく、pnpm で依存とアイコンを用意して上記3パスだけをZIP化する。
 
 ## リリース (Chrome Web Store + Firefox AMO 自動公開)
 
