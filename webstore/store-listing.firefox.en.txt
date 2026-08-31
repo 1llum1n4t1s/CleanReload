@@ -9,17 +9,17 @@ Firefox AMO Listing (English)
 Clean Reload
 
 ■ Summary (250 chars max)
-A super-reload extension that clears Service Worker, CacheStorage, and HTTP cache before reloading. It can also force all background tabs to sleep. Zero external transmission and zero data collection.
+A super-reload extension that clears Service Worker registrations and the HTTP cache before reloading. It can also force all background tabs to sleep. Zero external transmission and zero data collection.
 
 ■ Description (16,000 chars max)
-A one-click extension that fully clears the cache and reloads the page.
+A one-click extension that clears Service Worker registrations and the HTTP cache before reloading the page.
 Handy for web development and debugging, where you need to bypass stale cached files and see the latest state.
 
 ■ Features
 
 - One-click deep clean reload
-  Just click the toolbar icon to delete the Service Worker registration, CacheStorage, and HTTP cache, then reload the page.
-  It resets even the Service Worker cache and CacheStorage that a normal hard reload (Ctrl+Shift+R) leaves behind.
+  Just click the toolbar icon to delete the Service Worker registration and HTTP cache, then reload the page.
+  It removes even the Service Worker registration that a normal hard reload (Ctrl+Shift+R) leaves behind.
 
 - Clean-reload all tabs at once
   Right-click the toolbar icon and choose "Clean-reload all tabs" to clear the cache and reload every open tab.
@@ -46,7 +46,8 @@ Handy for web development and debugging, where you need to bypass stale cached f
 
 Firefox's browsingData API differs from Chrome's, so this extension behaves as follows on Firefox:
 
-- Service Worker registration / CacheStorage: removed per the target tab's hostname (origin-scoped precise removal is not supported by Firefox, so it falls back to hostname scope).
+- Service Worker registration: removed per the target tab's hostname (origin-scoped precise removal is not supported by Firefox, so it falls back to hostname scope).
+- CacheStorage (DOM Cache API): Firefox's browsingData API cannot delete it, so saved CacheStorage data remains.
 - HTTP cache: because Firefox's removeCache API cannot be scoped to a specific origin, clicking clears Firefox's entire HTTP cache (the Chrome edition clears only the current origin).
 
 In all cases the page is reloaded bypassing the HTTP cache afterward. Since the click is an explicit user action, the behavior above is within the intended reset.

@@ -27,7 +27,7 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 1. Actionクリックで対象タブを受け取り、短時間のバッジを表示する。
 2. URLを解析し、内部・危険プロトコルを除外する。
 3. 通常のoriginでは `clearCacheData()` にoriginとhostnameを渡す。`file:`などopaque originではキャッシュ削除を省略する。
-4. Service Worker / CacheStorageの削除完了後、HTTPキャッシュをバイパスして対象タブを再読み込みする。
+4. Service Worker 登録の削除完了後（Chrome では CacheStorage も削除）、HTTPキャッシュをバイパスして対象タブを再読み込みする。
 
 ### 全タブのクリーンリロード
 
@@ -49,7 +49,7 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 ランタイムAPIは `browser` があれば優先し、それ以外では `chrome` を使います。キャッシュ削除の差は `clearCacheData(origins, hostnames)` だけに集約します。
 
 - Chromeは `origins` でService Worker、CacheStorage、HTTPキャッシュを対象originへ限定する。
-- Firefoxは `origins` を使わず、Service Worker / CacheStorageを`hostnames`で限定する。失敗時はService Worker全体削除へフォールバックする。
+- Firefoxは `origins` を使わず、Service Worker 登録を`hostnames`で限定する。失敗時はService Worker全体削除へフォールバックする。DOM Cache API は browsingData で削除できないため残る。
 - Firefoxの `removeCache` は対象を限定できないため、HTTPキャッシュ全体を削除する。
 
 ## 重要な不変条件
@@ -58,7 +58,7 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 - Firefox manifestは `background.scripts` のみを使い、`service_worker` を持たない。
 - FirefoxのGecko IDは `{a4a7df25-9281-44f6-9d06-5959599c6473}`、最小バージョンは142.0を維持する。
 - `BLOCKED_PROTOCOLS` のページではキャッシュ削除も再読み込みも実行しない。
-- Service Worker / CacheStorageの削除は再読み込みより先に完了させ、古いService Workerがfetchを横取りする競合を避ける。
+- Service Worker 登録の削除（Chrome では CacheStorage も削除）は再読み込みより先に完了させ、古いService Workerがfetchを横取りする競合を避ける。
 - 配布ZIPは `manifest.json`、`icons/`、`src/` だけを含む。
 - `release/x.y.z` のversionとmanifestのversionを一致させる。
 
@@ -66,7 +66,7 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 
 - **単一ソースの両ブラウザ対応:** Chrome / Firefoxでbackgroundを共有し、仕様差を一つの関数へ閉じ込める。重複実装を避ける一方、FirefoxではHTTPキャッシュをorigin単位に限定できない。
 - **popupを持たない即時操作:** Actionクリックをクリーンリロードへ直接割り当て、追加操作はActionの右クリックへ置く。操作は短いが、実行前の確認画面はない。
-- **Service Worker削除を先に待つ:** `bypassCache`だけではService Workerのfetchを回避できないため、Service Worker / CacheStorage削除をawaitする。HTTPキャッシュ削除とreloadの失敗は既存挙動を維持して個別に警告する。
+- **Service Worker削除を先に待つ:** `bypassCache`だけではService Workerのfetchを回避できないため、Service Worker 登録の削除（Chrome では CacheStorage も削除）をawaitする。HTTPキャッシュ削除とreloadの失敗は既存挙動を維持して個別に警告する。
 - **メモリセーバー設定ではなくタブ破棄:** ブラウザ設定を変更せず、公開された `tabs.discard()` で現在のタブ内容だけをメモリから解放する。アクティブタブは残る。
 - **ストア公開の独立ジョブ:** ChromeとFirefoxを並列・独立に提出し、一方のストア障害が他方のsubmissionを妨げない。同一versionの審査中・登録済み応答は安全な重複として扱う。
 - **LPと拡張ランタイムの分離:** `web/` は静的レスポンスだけを返し、ストアが配布する拡張パッケージやブラウザAPIへ依存しない。

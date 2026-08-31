@@ -25,10 +25,10 @@
 
   <main id="main" class="legal section-shell">
     <h1>プライバシー<br>ポリシー</h1>
-    <p class="legal-lead">最終更新日: 2026年4月18日</p>
+    <p class="legal-lead">最終更新日: 2026年8月31日</p>
       <section>
         <h2>概要</h2>
-        <p>「Clean Reload」は、ユーザーのプライバシーを最大限に尊重するChrome拡張機能です。</p>
+        <p>「Clean Reload」は、ユーザーのプライバシーを最大限に尊重する Chrome / Firefox 拡張機能です。</p>
       </section>
       <section>
         <h2>データの収集</h2>
@@ -39,8 +39,8 @@
         <h3>activeTab</h3>
         <p>ユーザーがツールバーのアイコンをクリックした際に、アクティブなタブのみにアクセスするために使用します。バックグラウンドでのデータアクセスは一切行いません。</p>
         <h3>browsingData</h3>
-        <p>該当オリジンの Service Worker 登録、CacheStorage、HTTP キャッシュを削除するために使用します。閲覧履歴や Cookie などの他のデータには一切アクセスしません。</p>
-        <p class="legal-quote">Firefox 版では browsingData API の仕様差により、Service Worker / CacheStorage は対象タブのホスト名単位で、HTTP キャッシュはブラウザ全体で削除されます（いずれもクリック操作時のキャッシュ削除のみで、閲覧履歴・Cookie・パスワード等には一切アクセスしません）。</p>
+        <p>Service Worker 登録と HTTP キャッシュを削除し、Chrome では該当オリジンの CacheStorage も削除するために使用します。閲覧履歴や Cookie などの他のデータには一切アクセスしません。</p>
+        <p class="legal-quote">Firefox 版では browsingData API の仕様差により、Service Worker 登録は対象タブのホスト名単位で、HTTP キャッシュはブラウザ全体で削除されます。Firefox の browsingData API では CacheStorage（DOM Cache API）を削除できないため、保存済みの CacheStorage は残ります（閲覧履歴・Cookie・パスワード等には一切アクセスしません）。</p>
         <h3>contextMenus</h3>
         <p>ツールバーのアイコンを右クリックした際に「全タブをクリーンリロード」メニュー項目を表示するために使用します。ページ上のコンテキストメニューには一切追加しません。</p>
         <h3>tabs</h3>

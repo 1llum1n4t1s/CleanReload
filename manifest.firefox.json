@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Clean Reload",
-  "description": "ワンクリックでキャッシュを完全クリアしてページを再読み込みします。",
+  "description": "ワンクリックで Service Worker 登録と HTTP キャッシュをクリアしてページを再読み込みします。",
   "version": "1.0.15",
   "browser_specific_settings": {
     "gecko": {

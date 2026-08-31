@@ -1,6 +1,6 @@
 # Privacy Policy - Clean Reload
 
-Last updated: April 18, 2026
+Last updated: August 31, 2026
 
 ## Overview
 
@@ -16,9 +16,9 @@ This extension does not collect, store, or transmit any personal information.
 Used to access only the active tab when you click the toolbar icon. No background data access is performed.
 
 ### browsingData
-Used to delete the Service Worker registration, CacheStorage, and HTTP cache of the relevant origin. It never touches other data such as browsing history or cookies.
+Used to delete Service Worker registrations and the HTTP cache, and on Chrome to delete CacheStorage for the relevant origin. It never touches other data such as browsing history or cookies.
 
-> On Firefox, due to differences in the browsingData API, the Service Worker / CacheStorage are removed per the target tab's hostname, and the HTTP cache is cleared for the whole browser (in both cases only cache is deleted on click; browsing history, cookies, passwords, etc. are never accessed).
+> On Firefox, due to differences in the browsingData API, Service Worker registrations are removed per the target tab's hostname and the HTTP cache is cleared for the whole browser. Firefox's browsingData API cannot delete CacheStorage (the DOM Cache API), so saved CacheStorage data remains. Browsing history, cookies, passwords, and other data are never accessed.
 
 ### contextMenus
 Used to show the clean-reload-all-tabs and force-background-tabs-to-sleep commands when you right-click the toolbar icon. Nothing is added to the in-page context menu.

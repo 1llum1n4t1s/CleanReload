@@ -2,7 +2,7 @@
   "name": "clean-reload",
   "version": "1.0.15",
   "type": "commonjs",
-  "description": "ワンクリックで Service Worker・CacheStorage・HTTP キャッシュを完全クリアしてページを再読み込みする Chrome / Firefox 拡張機能",
+  "description": "ワンクリックで Service Worker と HTTP キャッシュをクリアし、Chrome では CacheStorage も削除して再読み込みする拡張機能",
   "scripts": {
     "generate-icons": "node scripts/generate-icons.js",
     "generate-screenshots": "node webstore/generate-screenshots.js",

@@ -1,10 +1,10 @@
 # プライバシーポリシー - Clean Reload
 
-最終更新日: 2026年4月18日
+最終更新日: 2026年8月31日
 
 ## 概要
 
-「Clean Reload」は、ユーザーのプライバシーを最大限に尊重するChrome拡張機能です。
+「Clean Reload」は、ユーザーのプライバシーを最大限に尊重する Chrome / Firefox 拡張機能です。
 
 ## データの収集
 
@@ -16,9 +16,9 @@
 ユーザーがツールバーのアイコンをクリックした際に、アクティブなタブのみにアクセスするために使用します。バックグラウンドでのデータアクセスは一切行いません。
 
 ### browsingData
-該当オリジンの Service Worker 登録、CacheStorage、HTTP キャッシュを削除するために使用します。閲覧履歴や Cookie などの他のデータには一切アクセスしません。
+Service Worker 登録と HTTP キャッシュを削除し、Chrome では該当オリジンの CacheStorage も削除するために使用します。閲覧履歴や Cookie などの他のデータには一切アクセスしません。
 
-> Firefox 版では browsingData API の仕様差により、Service Worker / CacheStorage は対象タブのホスト名単位で、HTTP キャッシュはブラウザ全体で削除されます（いずれもクリック操作時のキャッシュ削除のみで、閲覧履歴・Cookie・パスワード等には一切アクセスしません）。
+> Firefox 版では browsingData API の仕様差により、Service Worker 登録は対象タブのホスト名単位で、HTTP キャッシュはブラウザ全体で削除されます。Firefox の browsingData API では CacheStorage（DOM Cache API）を削除できないため、保存済みの CacheStorage は残ります（閲覧履歴・Cookie・パスワード等には一切アクセスしません）。
 
 ### contextMenus
 ツールバーのアイコンを右クリックした際に「全タブをクリーンリロード」と「全バックグラウンドタブを強制スリープ」のメニュー項目を表示するために使用します。ページ上のコンテキストメニューには一切追加しません。

@@ -1,16 +1,16 @@
 # Clean Reload
 
-ワンクリックでキャッシュを完全クリアしてページを再読み込みする Chrome / Firefox 拡張機能です。
+ワンクリックで Service Worker 登録と HTTP キャッシュをクリアしてページを再読み込みする Chrome / Firefox 拡張機能です。Chrome では CacheStorage も削除します。
 
 ## 機能
 
 ツールバーのアイコンをクリックするだけで、以下を自動実行します：
 
 1. **Service Worker** の登録をすべて解除
-2. **CacheStorage** 内のキャッシュをすべて削除
+2. **CacheStorage** 内のキャッシュをすべて削除（Chrome のみ）
 3. **HTTPキャッシュ**をバイパスしてページをリロード
 
-通常のスーパーリロード（Ctrl+Shift+R）ではクリアされないService WorkerキャッシュやCacheStorageも含めて完全にリセットします。
+通常のスーパーリロード（Ctrl+Shift+R）では残る Service Worker 登録も解除します。Chrome では CacheStorage も含めてリセットします。
 
 ### 全タブをクリーンリロード
 
@@ -30,7 +30,8 @@ Chrome Web Store からインストールします。
 
 > **Firefox 版での挙動の違い**
 > Firefox の browsingData API は Chrome と仕様が異なります。
-> - **Service Worker / CacheStorage**: 対象タブのホスト名単位で削除します（Firefox は origin 単位の精密削除に未対応のため、ホスト名単位にフォールバック）。
+> - **Service Worker 登録**: 対象タブのホスト名単位で削除します（Firefox は origin 単位の精密削除に未対応のため、ホスト名単位にフォールバック）。
+> - **CacheStorage（DOM Cache API）**: Firefox の browsingData API では削除できないため残ります。
 > - **HTTP キャッシュ**: Firefox の `removeCache` はオリジンを絞り込めない仕様のため、Firefox 全体の HTTP キャッシュをクリアします（Chrome 版は該当オリジンのみ）。
 
 ## 使い方
@@ -43,7 +44,7 @@ Chrome Web Store からインストールします。
 ## 権限
 
 - **activeTab** — クリック時にアクティブなタブのみにアクセス
-- **browsingData** — 該当オリジンの Service Worker 登録 / CacheStorage / HTTP キャッシュを削除するために使用
+- **browsingData** — Service Worker 登録と HTTP キャッシュを削除し、Chrome では CacheStorage も削除するために使用
 - **contextMenus** — 右クリックメニューに全タブのクリーンリロードと強制スリープを追加
 - **tabs** — 全タブリロード時のURL取得と、バックグラウンドタブのメモリ解放に使用
 

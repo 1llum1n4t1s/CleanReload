@@ -4,8 +4,9 @@ const api = (typeof browser !== 'undefined') ? browser : chrome;
 
 // Firefox は browsingData.RemovalOptions.origins を非対応（MDN BCD: version_added=false）。
 // さらに removeCache は options を無視して常に全 HTTP キャッシュを消す仕様。
-// そのため Firefox では「serviceWorkers を hostnames で絞って削除（FF77+、Cache API も巻き取る）
-// + 全 HTTP キャッシュ削除」へフォールバックする。Chrome は従来どおり origins で精密削除する。
+// そのため Firefox では「Service Worker 登録を hostnames で絞って削除（FF77+）
+// + 全 HTTP キャッシュ削除」へフォールバックする。DOM Cache API は browsingData で削除できない。
+// Chrome は従来どおり origins で Service Worker / CacheStorage / HTTP キャッシュを精密削除する。
 const isFirefox = typeof browser !== 'undefined' && navigator.userAgent.includes('Firefox');
 
 const BLOCKED_PROTOCOLS = new Set([
@@ -19,11 +20,12 @@ const BLOCKED_PROTOCOLS = new Set([
   'blob:',
 ]);
 
-// 渡されたオリジン群（Chrome）/ ホスト名群（Firefox）の Service Worker 登録・CacheStorage・
-// HTTP キャッシュを削除する。Chrome / Firefox の browsingData 仕様差をここ 1 箇所で吸収する。
+// 渡されたオリジン群（Chrome）/ ホスト名群（Firefox）の Service Worker 登録と HTTP キャッシュを削除する。
+// Chrome では CacheStorage も削除する。Chrome / Firefox の browsingData 仕様差をここ 1 箇所で吸収する。
 async function clearCacheData(origins, hostnames) {
   if (isFirefox) {
-    // Firefox: origins 非対応。Service Worker（と Cache API）は hostnames で絞って削除（FF77+）。
+    // Firefox: origins 非対応。Service Worker 登録は hostnames で絞って削除（FF77+）。
+    // DOM Cache API は serviceWorkers / cache のどちらでも削除されない（Mozilla Bug 1526246）。
     // 万一 reject されたら SW 全消しへフォールバックする。
     await api.browsingData.remove(
       { hostnames },

@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Clean Reload は Service Worker・CacheStorage・HTTP キャッシュをまとめて削除してからページを再読み込みする Chrome / Firefox 拡張機能です。">
+  <meta name="description" content="Clean Reload は Service Worker 登録と HTTP キャッシュをクリアし、Chrome では CacheStorage も削除してから再読み込みする拡張機能です。">
   <meta name="theme-color" content="#eff6f4">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ja_JP">
   <meta property="og:title" content="Clean Reload — キャッシュを残さず、もう一度読み込む。">
-  <meta property="og:description" content="Clean Reload は Service Worker・CacheStorage・HTTP キャッシュをまとめて削除してからページを再読み込みする Chrome / Firefox 拡張機能です。">
+  <meta property="og:description" content="Clean Reload は Service Worker 登録と HTTP キャッシュをクリアし、Chrome では CacheStorage も削除してから再読み込みする拡張機能です。">
   <meta property="og:url" content="https://cleanreload.kagayoi.com/">
   <title>Clean Reload — キャッシュを残さず、もう一度読み込む。</title>
   <link rel="canonical" href="https://cleanreload.kagayoi.com/">
@@ -39,13 +39,13 @@
       <div class="hero-copy reveal">
         <p class="eyebrow"><span>Deep clean reload</span><span>Chrome / Firefox / MV3</span></p>
         <h1>そのキャッシュ、<br><em>まだ残ってる。</em></h1>
-        <p class="hero-lead">Ctrl+Shift+R では消えない Service Worker 登録と CacheStorage まで削除してから再読み込み。「直したのに反映されない」をワンクリックで終わらせます。</p>
+        <p class="hero-lead">Ctrl+Shift+R では消えない Service Worker 登録を解除してから再読み込み。Chrome では CacheStorage も削除し、「直したのに反映されない」をワンクリックで終わらせます。</p>
         <div class="hero-actions">
           <a class="button button-primary" href="https://chromewebstore.google.com/detail/mjmkdldkhkpgbohfhihngbpldkbnmckd">Chrome に追加</a>
           <a class="text-link" href="https://addons.mozilla.org/ja/firefox/addon/clean-reload/">Firefox 版 <span aria-hidden="true">↗</span></a>
         </div>
         <dl class="hero-facts" aria-label="製品概要">
-          <div><dt>削除対象</dt><dd>Service Worker / CacheStorage / HTTP</dd></div>
+          <div><dt>削除対象</dt><dd>Service Worker / HTTP / Chrome は CacheStorage</dd></div>
           <div><dt>適用範囲</dt><dd>現在のタブ / 全タブ一括</dd></div>
         </dl>
       </div>
@@ -59,9 +59,9 @@
             </thead>
             <tbody>
               <tr><th scope="row">Service Worker 登録</th><td class="cell-before">残る</td><td class="cell-after">解除</td></tr>
-              <tr><th scope="row">CacheStorage</th><td class="cell-before">残る</td><td class="cell-after">削除</td></tr>
-              <tr><th scope="row">HTTP キャッシュ</th><td class="cell-before">一部のみ</td><td class="cell-after">削除</td></tr>
-              <tr><th scope="row">読み込まれる JS / CSS</th><td class="cell-before">古い可能性</td><td class="cell-after">常に最新</td></tr>
+              <tr><th scope="row">CacheStorage</th><td class="cell-before">残る</td><td class="cell-after">Chrome: 削除 / Firefox: 残る</td></tr>
+              <tr><th scope="row">HTTP キャッシュ</th><td class="cell-before">一部のみ</td><td class="cell-after">Chrome: オリジン / Firefox: 全体</td></tr>
+              <tr><th scope="row">読み込まれる JS / CSS</th><td class="cell-before">古い可能性</td><td class="cell-after">HTTP キャッシュをバイパス</td></tr>
             </tbody>
           </table>
         </div>
@@ -84,10 +84,10 @@
       <div class="spec-panel">
         <p>Clean Reload が削除するもの</p>
         <dl class="spec-grid">
-          <div><dt>Service Worker</dt><dd>該当オリジンの登録を解除してから再読み込みする</dd></div>
-          <div><dt>CacheStorage</dt><dd>Cache API に積まれたレスポンスを削除する</dd></div>
-          <div><dt>HTTP cache</dt><dd>ブラウザキャッシュを迂回して取得し直す</dd></div>
-          <div><dt>スコープ</dt><dd>対象は現在のオリジン。他サイトのデータには触れない</dd></div>
+          <div><dt>Service Worker</dt><dd>Chrome はオリジン単位、Firefox はホスト名単位で登録を解除する</dd></div>
+          <div><dt>CacheStorage</dt><dd>Chrome では削除する。Firefox では browsingData の制限により残る</dd></div>
+          <div><dt>HTTP cache</dt><dd>Chrome はオリジン単位、Firefox はブラウザ全体を削除してバイパスする</dd></div>
+          <div><dt>スコープ</dt><dd>ブラウザの API 仕様に沿って対象範囲を切り替える</dd></div>
         </dl>
         <p class="spec-note">DevTools の Application タブを開いて手作業で消していた手順を、ツールバーのクリック 1 回に畳んでいます。</p>
       </div>
@@ -101,13 +101,13 @@
       </div>
       <div class="process-step reveal">
         <span class="step-index">02</span>
-        <h3>オリジン単位で掃除</h3>
-        <p>そのページのオリジンに紐づく Service Worker 登録・CacheStorage・HTTP キャッシュを削除します。</p>
+        <h3>ブラウザ別スコープで掃除</h3>
+        <p>Chrome は現在のオリジンを対象にし、Firefox は Service Worker 登録をホスト名単位、HTTP キャッシュをブラウザ全体で削除します。</p>
       </div>
       <div class="process-step reveal">
         <span class="step-index">03</span>
         <h3>最新の状態で再読み込み</h3>
-        <p>掃除が終わってからリロードするため、確実に最新のファイルで表示されます。</p>
+        <p>Service Worker 登録の解除後に、HTTP キャッシュをバイパスして再読み込みします。</p>
       </div>
     </section>
 
@@ -131,17 +131,17 @@
               <tr><th scope="col">削除対象</th><th scope="col">結果</th><th scope="col">判定</th></tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Service Worker 登録</th><td>1 件を解除</td><td>CLEARED</td></tr>
-              <tr><th scope="row">CacheStorage</th><td>4 バケット削除</td><td>CLEARED</td></tr>
-              <tr><th scope="row">HTTP キャッシュ</th><td>バイパス</td><td>RELOAD</td></tr>
+              <tr><th scope="row">Service Worker 登録</th><td>Chrome: オリジン / Firefox: ホスト名</td><td>CLEARED</td></tr>
+              <tr><th scope="row">CacheStorage</th><td>Chrome: 削除 / Firefox: 残る</td><td>BROWSER-SPECIFIC</td></tr>
+              <tr><th scope="row">HTTP キャッシュ</th><td>Chrome: オリジン / Firefox: 全体</td><td>RELOAD</td></tr>
               <tr><th scope="row">Cookie / localStorage</th><td>触れない</td><td>KEEP</td></tr>
             </tbody>
           </table>
         </div>
         <p class="fact-note">
           <span>SCOPE</span>
-          <code>origin: http://localhost:5173</code>
-          <strong>same-origin only</strong>
+          <code>Chrome: origin / Firefox: hostname + global HTTP cache</code>
+          <strong>browser-specific scope</strong>
           <b>ログイン状態や保存データは残したまま、キャッシュ層だけを落とす</b>
         </p>
       </div>
@@ -151,7 +151,7 @@
       <p class="section-code">DESIGN PRINCIPLES</p>
       <div class="principle-grid">
         <article><span>LOCAL</span><h3>外部に送らない</h3><p>収集も送信もしません。処理はすべてブラウザの中で完結します。</p></article>
-        <article><span>SCOPED</span><h3>オリジン単位で消す</h3><p>対象は今見ているオリジンだけ。他サイトのキャッシュは巻き添えにしません。</p></article>
+        <article><span>SCOPED</span><h3>ブラウザ差を明示</h3><p>Chrome は現在のオリジンだけ。Firefox は仕様上、HTTP キャッシュをブラウザ全体で削除します。</p></article>
         <article><span>MINIMAL</span><h3>権限は必要な分だけ</h3><p>常時の広域サイト権限を持たない構成で動作します。</p></article>
       </div>
     </section>
