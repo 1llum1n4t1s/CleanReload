@@ -55,7 +55,7 @@ Compress-Archive -Path manifest.json,icons,src -DestinationPath clean-reload.zip
 
 ## リリース (Chrome Web Store + Firefox AMO 自動公開)
 
-1. `manifest.json` と `manifest.firefox.json` の `version` を上げてコミット（version は一致必須。更新は `/vava` 経由）
+1. `manifest.json`、`manifest.firefox.json`、`package.json` の `version` を上げてコミット（3ファイルは一致必須。更新は `/vava` 経由）
 2. `release/x.y.z`（`x.y.z` は manifest の version と一致必須）ブランチを push
 3. [.github/workflows/publish.yml](.github/workflows/publish.yml) が 2 job を並列起動:
    - **publish**（Chrome）: `pnpm install --frozen-lockfile` → `generate-icons` → zip → `chrome-webstore-upload-cli --auto-publish`
@@ -115,7 +115,7 @@ Firefox の browsingData は Chrome と挙動が異なるため、`clearCacheDat
 - `background` は `scripts` 配列のみ（Firefox MV3 は `service_worker` 非対応）。`service_worker` キーは書かない。
 - `browser_specific_settings.gecko.strict_min_version` は **`142.0`**。`data_collection_permissions` が Firefox 142+ 導入のため、140 等にすると AMO の `KEY_FIREFOX_ANDROID_UNSUPPORTED_BY_MIN_VERSION` 警告が出る。両者を 142 で揃える。
 - gecko id は本拡張専用の UUID `{a4a7df25-9281-44f6-9d06-5959599c6473}`（他拡張と共有しない）。
-- version は `manifest.json` と一致させる（CI がブランチ名と照合）。
+- version は `manifest.json` と `package.json` に一致させる（CI がversionの相互整合とブランチ名を照合）。
 
 ### 初回 AMO 登録（CI からは新規 add-on 作成不可 → ローカルで実施）
 1. ローカルで `pnpm install && node scripts/generate-icons.js`
