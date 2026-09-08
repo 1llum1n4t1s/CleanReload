@@ -86,7 +86,7 @@ CleanReload/
 │   ├── privacy-policy.md    # プライバシーポリシー（日本語）
 │   └── privacy-policy.en.md # プライバシーポリシー（英語、AMO listing 用）
 ├── vava.config.json         # /vava スキル用設定（amo.slug / listingFiles 等）
-├── web/                     # cleanreload.kagayoi.com の独立した静的 LP Worker
+├── ../vps-web/lp/cleanreload/                     # cleanreload.kagayoi.com のVPS向け静的LP
 └── .github/workflows/publish.yml  # Chrome + Firefox 自動公開ワークフロー
 ```
 
@@ -152,3 +152,9 @@ AMO_JWT_ISSUER=<jwt_issuer> AMO_JWT_SECRET=<jwt_secret> \
 - HTTP キャッシュ削除と `tabs.reload({bypassCache:true})` は `.catch()` でログするだけの fire-and-forget（初版から継続する設計判断）
 - 強制スリープは `tabs.query({ active: false, discarded: false })` の結果だけを対象にする。各ウィンドウのアクティブタブはブラウザ仕様上破棄できないため対象外とし、個別失敗は残りのタブ処理を止めず警告へ記録する
 - API は `api`（`browser ?? chrome`）経由で呼ぶ。Firefox の browsingData 仕様差は `clearCacheData()` の `isFirefox` 分岐に集約する（個別呼び出し箇所で分岐を散らさない）
+
+## 製品ページの配信先
+
+製品ページの配信HTMLは `../vps-web/lp/cleanreload/`（編集元は `../vps-web/tools/lp/templates/`）、公開実体はVPSの `/srv/www/lp/cleanreload/`。
+直接配信の設定は `../vps-web/deploy/caddy-sites/lp-cleanreload.caddy` に置く。
+公開URLを維持し、静的ファイルの配信は `vps-web/deploy/deploy-lp.ps1` へ統一する。

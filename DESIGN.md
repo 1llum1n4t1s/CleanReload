@@ -6,7 +6,7 @@
 
 Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用者の明示操作に応じて、単一タブまたは全タブのキャッシュを消去して再読み込みするほか、非アクティブなタブをメモリから破棄します。ページへのコード注入、利用者データの保存、外部サーバーへの送信は行いません。
 
-`web/` は `cleanreload.kagayoi.com` の案内・プライバシーページを配信する独立した Cloudflare Worker です。拡張機能の実行やストア配布には関与しません。
+`../vps-web/lp/cleanreload/` は `cleanreload.kagayoi.com` の案内・プライバシーページをVPSへ配信する静的ソースです。拡張機能の実行やストア配布には関与しません。
 
 ## 主要コンポーネントと境界
 
@@ -18,7 +18,7 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 | `icons/`、`scripts/` | SVG正本から配布用PNGを生成 | 生成PNGはGit管理せず、ローカルとCIで再生成する |
 | `webstore/`、`docs/` | ストア掲載文、掲載画像テンプレート、日英プライバシーポリシー | ランタイム配布物には含めず、ストア申請と説明更新に使う |
 | `.github/workflows/publish.yml` | Chrome Web StoreとFirefox AMOへの公開 | `release/x.y.z` pushで2ジョブを独立実行する |
-| `web/` | LP、プライバシー、静的素材のHTTP配信 | GET / HEADだけを許可し、未知パスは404、その他のmethodは405にする |
+| `../vps-web/lp/cleanreload/` | LP、プライバシー、静的素材のHTTP配信 | GET / HEADだけを許可し、未知パスは404、その他のmethodは405にする |
 
 ## 拡張機能のデータフロー
 
@@ -69,4 +69,10 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 - **Service Worker削除を先に待つ:** `bypassCache`だけではService Workerのfetchを回避できないため、Service Worker 登録の削除（Chrome では CacheStorage も削除）をawaitする。HTTPキャッシュ削除とreloadの失敗は既存挙動を維持して個別に警告する。
 - **メモリセーバー設定ではなくタブ破棄:** ブラウザ設定を変更せず、公開された `tabs.discard()` で現在のタブ内容だけをメモリから解放する。アクティブタブは残る。
 - **ストア公開の独立ジョブ:** ChromeとFirefoxを並列・独立に提出し、一方のストア障害が他方のsubmissionを妨げない。同一versionの審査中・登録済み応答は安全な重複として扱う。
-- **LPと拡張ランタイムの分離:** `web/` は静的レスポンスだけを返し、ストアが配布する拡張パッケージやブラウザAPIへ依存しない。
+- **LPと拡張ランタイムの分離:** `../vps-web/lp/cleanreload/` は静的レスポンスだけを返し、ストアが配布する拡張パッケージやブラウザAPIへ依存しない。
+
+## 製品ページの配信先
+
+製品ページの配信HTMLは `../vps-web/lp/cleanreload/`（編集元は `../vps-web/tools/lp/templates/`）、公開実体はVPSの `/srv/www/lp/cleanreload/`。
+直接配信の設定は `../vps-web/deploy/caddy-sites/lp-cleanreload.caddy` に置く。
+公開URLを維持し、静的ファイルの配信は `vps-web/deploy/deploy-lp.ps1` へ統一する。
