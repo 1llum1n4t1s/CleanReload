@@ -9,20 +9,20 @@ Firefox AMO Listing (English)
 Clean Reload
 
 ■ Summary (250 chars max)
-A super-reload extension that clears Service Worker registrations and the HTTP cache before reloading. It can also force all background tabs to sleep. Zero external transmission and zero data collection.
+A super-reload extension that removes Service Worker registrations and starts clearing the HTTP cache while reloading with the cache bypassed. It also forces background tabs to sleep. Zero external transmission and zero data collection.
 
 ■ Description (16,000 chars max)
-A one-click extension that clears Service Worker registrations and the HTTP cache before reloading the page.
+A one-click extension that removes Service Worker registrations and starts clearing the HTTP cache while reloading the page with the cache bypassed.
 Handy for web development and debugging, where you need to bypass stale cached files and see the latest state.
 
 ■ Features
 
 - One-click deep clean reload
-  Just click the toolbar icon to delete the Service Worker registration and HTTP cache, then reload the page.
+  Click the toolbar icon to wait for Service Worker registration removal, start clearing the HTTP cache, and reload the page while bypassing the cache.
   It removes even the Service Worker registration that a normal hard reload (Ctrl+Shift+R) leaves behind.
 
 - Clean-reload all tabs at once
-  Right-click the toolbar icon and choose "Clean-reload all tabs" to clear the cache and reload every open tab.
+  Right-click the toolbar icon and choose "全タブをクリーンリロード" (clean-reload all tabs) to clear the cache and reload every open tab.
 
 - Force all background tabs to sleep
   Right-click the toolbar icon and choose the background-tab sleep command to release inactive tabs from memory. Tabs remain open and reload automatically when selected. The active tab in each window is excluded.
@@ -39,7 +39,7 @@ Handy for web development and debugging, where you need to bypass stale cached f
 
 1. Install the add-on
 2. On the page you want to reload, click the toolbar icon (single tab)
-3. To reload every tab at once, right-click the icon and choose "Clean-reload all tabs"
+3. To reload every tab at once, right-click the icon and choose "全タブをクリーンリロード" (clean-reload all tabs)
 4. To release background tabs from memory, right-click the icon and choose the background-tab sleep command
 
 ■ Behavior on Firefox (important)
@@ -50,7 +50,7 @@ Firefox's browsingData API differs from Chrome's, so this extension behaves as f
 - CacheStorage (DOM Cache API): Firefox's browsingData API cannot delete it, so saved CacheStorage data remains.
 - HTTP cache: because Firefox's removeCache API cannot be scoped to a specific origin, clicking clears Firefox's entire HTTP cache (the Chrome edition clears only the current origin).
 
-In all cases the page is reloaded bypassing the HTTP cache afterward. Since the click is an explicit user action, the behavior above is within the intended reset.
+After waiting for Service Worker registration removal, the page reloads while bypassing the HTTP cache, without waiting for HTTP cache deletion to finish. Reloading continues even if deletion fails. Since the click is an explicit user action, the behavior above is within the intended reset.
 
 ■ Privacy
 Everything runs locally in the browser; there is no communication with external servers and no collection of personal data. No remote code is loaded. See docs/privacy-policy.en.md for details.
