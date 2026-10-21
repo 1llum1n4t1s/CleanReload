@@ -55,25 +55,25 @@ async function clearCacheData(origins, hostnames) {
   }
 }
 
-async function cleanReloadTab(tab) {
-  if (!tab?.url) return;
+function getReloadUrl(tab) {
+  if (!tab?.url) return null;
 
-  let origin;
-  let hostname;
   try {
     const parsed = new URL(tab.url);
-    if (BLOCKED_PROTOCOLS.has(parsed.protocol)) return;
-    origin = parsed.origin;
-    hostname = parsed.hostname;
+    return BLOCKED_PROTOCOLS.has(parsed.protocol) ? null : parsed;
   } catch {
-    return;
+    return null;
   }
+}
 
-  // file: など opaque origin（origin === 'null'）は SW / CacheStorage を持てず、
-  // browsingData の origin/hostname 絞り込みも効かない。キャッシュ削除はスキップし、
-  // HTTP キャッシュ層をバイパスするリロードだけを行う。
-  if (origin && origin !== 'null') {
-    await clearCacheData([origin], [hostname]);
+async function cleanReloadTab(tab) {
+  const parsed = getReloadUrl(tab);
+  if (!parsed) return;
+
+  // file: はブラウザによって origin が 'file://' になるため protocol でも除外する。
+  // opaque origin と同様にキャッシュ削除はスキップし、バイパスリロードだけを行う。
+  if (parsed.protocol !== 'file:' && parsed.origin && parsed.origin !== 'null') {
+    await clearCacheData([parsed.origin], [parsed.hostname]);
   }
 
   api.tabs.reload(tab.id, { bypassCache: true }).catch(error => {
@@ -129,19 +129,14 @@ api.contextMenus.onClicked.addListener(async (info) => {
   const origins = new Set();
   const hostnames = new Set();
   for (const tab of allTabs) {
-    if (!tab?.url) continue;
-    try {
-      const parsed = new URL(tab.url);
-      if (BLOCKED_PROTOCOLS.has(parsed.protocol)) continue;
-      // file: など opaque origin はキャッシュ削除対象から外すが、bypassCache リロードはする
-      if (parsed.origin && parsed.origin !== 'null') {
-        origins.add(parsed.origin);
-        hostnames.add(parsed.hostname);
-      }
-      reloadTargets.push(tab.id);
-    } catch {
-      continue;
+    const parsed = getReloadUrl(tab);
+    if (!parsed) continue;
+    // file: と opaque origin はキャッシュ削除対象から外すが、bypassCache リロードはする
+    if (parsed.protocol !== 'file:' && parsed.origin && parsed.origin !== 'null') {
+      origins.add(parsed.origin);
+      hostnames.add(parsed.hostname);
     }
+    reloadTargets.push(tab.id);
   }
 
   if (reloadTargets.length === 0) return;

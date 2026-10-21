@@ -25,7 +25,7 @@
     box-shadow: 0 12px 40px rgba(2, 136, 209, 0.25);
     display: flex; align-items: center; justify-content: center;
   }
-  /* インラインSVGアイコン */
+  /* 共通SVGアイコン */
   .reload-icon {
     width: 110px; height: 110px;
   }
@@ -62,21 +62,7 @@
   <div class="container">
     <div class="icon-area">
       <div class="icon-box">
-        <svg class="reload-icon" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#4FC3F7"/>
-              <stop offset="100%" style="stop-color:#0288D1"/>
-            </linearGradient>
-          </defs>
-          <rect x="4" y="4" width="120" height="120" rx="24" ry="24" fill="url(#bg)"/>
-          <path d="M 64,26 A 38,38 0 1,1 31,45" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
-          <polygon points="20,34 31,56 42,34" fill="white"/>
-          <g fill="#FFF176">
-            <polygon points="100,22 103,14 106,22 114,25 106,28 103,36 100,28 92,25" opacity="0.9"/>
-            <polygon points="30,82 32,77 34,82 39,84 34,86 32,91 30,86 25,84" opacity="0.7"/>
-          </g>
-        </svg>
+        <img class="reload-icon" src="../icons/icon.svg" alt="">
       </div>
       <div class="title">Clean Reload</div>
     </div>

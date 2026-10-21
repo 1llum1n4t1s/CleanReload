@@ -23,7 +23,6 @@ async function generateIcons() {
       .png()
       .toFile(outputPath);
     console.log(`✅ ${size}x${size} アイコンを生成しました: ${path.basename(outputPath)}`);
-    return size;
   }));
 
   const failures = results

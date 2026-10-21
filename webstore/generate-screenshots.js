@@ -52,12 +52,19 @@ async function generateScreenshot(browser, htmlPath, outputPath, width, height) 
 }
 
 async function runWithConcurrency(factories, limit) {
-  const results = [];
-  for (let i = 0; i < factories.length; i += limit) {
-    const chunk = factories.slice(i, i + limit);
-    const settled = await Promise.allSettled(chunk.map(fn => fn()));
-    results.push(...settled);
-  }
+  const results = new Array(factories.length);
+  let nextIndex = 0;
+  // 完了した枠から次の画像を生成し、結果は入力順に保持する。
+  await Promise.all(Array.from({ length: Math.min(limit, factories.length) }, async () => {
+    while (nextIndex < factories.length) {
+      const index = nextIndex++;
+      try {
+        results[index] = { status: 'fulfilled', value: await factories[index]() };
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason };
+      }
+    }
+  }));
   return results;
 }
 
