@@ -2,6 +2,7 @@
   "name": "clean-reload",
   "version": "1.0.17",
   "type": "commonjs",
+  "packageManager": "pnpm@12.16.1",
   "description": "ワンクリックで Service Worker と HTTP キャッシュをクリアし、Chrome では CacheStorage も削除して再読み込みする拡張機能",
   "scripts": {
     "generate-icons": "node scripts/generate-icons.js",
@@ -10,7 +11,7 @@
   },
   "devDependencies": {
     "chrome-webstore-upload-cli": "^4.0.2",
-    "puppeteer": "^25.15.0",
+    "puppeteer": "^25.16.0",
     "sharp": "^0.35.5",
     "web-ext": "^10.8.0"
   },

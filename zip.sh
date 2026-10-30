@@ -9,16 +9,10 @@ cd "$(dirname "$0")"
 echo "拡張機能パッケージを生成中..."
 echo ""
 
-# 古いZIPファイルを削除
-rm -f ./clean-reload.zip
-echo "既存のZIPファイルを削除しました"
-
 # アイコン生成 (失敗時は set -e により即 exit)
-if [ -f scripts/generate-icons.js ]; then
-  echo "アイコン生成中..."
-  npm install --silent
-  node scripts/generate-icons.js
-fi
+echo "アイコン生成中..."
+pnpm install --frozen-lockfile
+pnpm run generate-icons
 
 echo "ZIPファイルを作成中..."
 
@@ -29,11 +23,11 @@ if ! command -v zip &> /dev/null; then
   exit 1
 fi
 
-zip -r ./clean-reload.zip \
+zip -r - \
   manifest.json \
   icons/ \
   src/ \
-  -x "*.DS_Store" "*.swp" "*~"
+  -x "*.DS_Store" "*.swp" "*~" > ./clean-reload.zip
 
 echo "ZIPファイルを作成しました: clean-reload.zip"
 echo ""

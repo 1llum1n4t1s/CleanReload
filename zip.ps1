@@ -1,34 +1,6 @@
+﻿#requires -Version 7.0
 # クリーンリロード 拡張機能パッケージ生成スクリプト
-# 使い方: powershell -ExecutionPolicy Bypass -File zip.ps1
-
-
-# 検証済みの作業対象だけを標準APIで削除する。
-function Remove-LocalWorkItem {
-    param([string[]]$LiteralPath, [string]$AllowedRoot, [switch]$IgnoreMissing, [switch]$AllowLeafJunction)
-    if ([string]::IsNullOrWhiteSpace($AllowedRoot) -or -not [IO.Path]::IsPathRooted($AllowedRoot)) { throw 'Cleanup root must be absolute.' }
-    $boundary = [IO.Path]::GetFullPath($AllowedRoot).TrimEnd('\','/') + [IO.Path]::DirectorySeparatorChar
-    foreach ($target in $LiteralPath) {
-        if ([string]::IsNullOrWhiteSpace($target) -or -not [IO.Path]::IsPathRooted($target)) { throw 'Cleanup target must be absolute.' }
-        $resolved = [IO.Path]::GetFullPath($target)
-        if (-not $resolved.StartsWith($boundary, [StringComparison]::OrdinalIgnoreCase)) { throw 'Cleanup target is outside the allowed root.' }
-        $ancestor = $resolved
-        while ($ancestor) {
-            if (Test-Path -LiteralPath $ancestor) {
-                $item = Get-Item -LiteralPath $ancestor -Force -ErrorAction Stop
-                if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -and -not ($AllowLeafJunction -and $ancestor -eq $resolved -and $item.LinkType -eq 'Junction')) { throw 'Cleanup path contains a reparse point.' }
-            }
-            $ancestor = Split-Path $ancestor -Parent
-        }
-        if (-not (Test-Path -LiteralPath $resolved)) { if ($IgnoreMissing) { continue }; throw "Cleanup target is missing: $resolved" }
-        $item = Get-Item -LiteralPath $resolved -Force -ErrorAction Stop
-        $leafLink = [bool]($item.Attributes -band [IO.FileAttributes]::ReparsePoint)
-        if ($item.PSIsContainer -and -not $leafLink) {
-            if (@(Get-ChildItem -LiteralPath $resolved -Recurse -Force -ErrorAction Stop | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }).Count) { throw 'Cleanup directory contains a reparse point.' }
-        }
-        Remove-Item -LiteralPath $resolved -Recurse:($item.PSIsContainer -and -not $leafLink) -Force -ErrorAction Stop
-        if (Test-Path -LiteralPath $resolved) { throw "Cleanup target remains: $resolved" }
-    }
-}
+# 使い方: pwsh -NoProfile -File zip.ps1
 
 $ErrorActionPreference = "Stop"
 
@@ -36,57 +8,45 @@ Write-Host "拡張機能パッケージを生成中..." -ForegroundColor Cyan
 Write-Host ""
 
 # スクリプトのディレクトリをカレントディレクトリに設定
-$scriptDir = Split-Path -Parent ($MyInvocation.MyCommand.Path ?? $PSCommandPath ?? $PWD)
-if ($scriptDir) { Set-Location $scriptDir }
+Set-Location -LiteralPath $PSScriptRoot
 
-# アイコン生成
+# ロックファイルと同じ依存関係でアイコン生成
 Write-Host "アイコンを生成中..." -ForegroundColor Yellow
-npm install --silent
-if ($LASTEXITCODE -ne 0) { throw "npm install に失敗しました" }
-node scripts/generate-icons.js
+pnpm install --frozen-lockfile
+if ($LASTEXITCODE -ne 0) { throw "pnpm install に失敗しました" }
+pnpm run generate-icons
 if ($LASTEXITCODE -ne 0) { throw "アイコン生成に失敗しました" }
 
-# 古いZIPファイルを削除
+# 配布対象だけを直接ZIP化し、既存ZIPの内容を置き換える
 $zipName = "clean-reload.zip"
-if (Test-Path $zipName) {
-     Remove-LocalWorkItem -LiteralPath ($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($zipName)) -AllowedRoot $PSScriptRoot
-    Write-Host "既存のZIPファイルを削除しました" -ForegroundColor Yellow
-}
-
-# 一時ディレクトリを作成
-$tempDir = "temp-build"
-if (Test-Path $tempDir) {
-     Remove-LocalWorkItem -LiteralPath ($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($tempDir)) -AllowedRoot $PSScriptRoot
-}
-New-Item -ItemType Directory -Path $tempDir | Out-Null
-
-# 必要なファイルをコピー
-Write-Host "必要なファイルをコピー中..." -ForegroundColor Yellow
-
-Copy-Item "manifest.json" -Destination $tempDir
-Copy-Item "icons" -Destination $tempDir -Recurse
-Copy-Item "src" -Destination $tempDir -Recurse
-
-# 不要なファイルを除外
-Get-ChildItem -Path $tempDir -Recurse -Include "*.DS_Store", "*.swp", "*~" | ForEach-Object {  Remove-LocalWorkItem -LiteralPath $_.FullName -AllowedRoot $PSScriptRoot -IgnoreMissing }
-
-# ZIPファイルを作成
 Write-Host "ZIPファイルを作成中..." -ForegroundColor Cyan
-Compress-Archive -Path "$tempDir/*" -DestinationPath $zipName -Force
-
-# 一時ディレクトリを削除
- Remove-LocalWorkItem -LiteralPath ($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($tempDir)) -AllowedRoot $PSScriptRoot
-
-if (Test-Path $zipName) {
-    Write-Host "ZIPファイルを作成しました: $zipName" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "ファイルサイズ:" -ForegroundColor Cyan
-    $fileSize = (Get-Item $zipName).Length
-    $fileSizeKB = [math]::Round($fileSize / 1KB, 2)
-    Write-Host "   $fileSizeKB KB" -ForegroundColor White
-    Write-Host ""
-    Write-Host "パッケージが正常に作成されました!" -ForegroundColor Green
-} else {
-    Write-Host "ZIPファイルの作成に失敗しました" -ForegroundColor Red
-    exit 1
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+$files = @(
+    Get-Item -LiteralPath (Join-Path $PSScriptRoot 'manifest.json')
+    Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'icons'), (Join-Path $PSScriptRoot 'src') -Recurse -File -Force |
+        Where-Object { $_.Name -notlike '*.DS_Store' -and $_.Name -notlike '*.swp' -and $_.Name -notlike '*~' }
+)
+$stream = [IO.File]::Open((Join-Path $PSScriptRoot $zipName), [IO.FileMode]::Create)
+$archive = $null
+try {
+    $archive = [IO.Compression.ZipArchive]::new($stream, [IO.Compression.ZipArchiveMode]::Create, $true)
+    foreach ($file in $files) {
+        $entryName = $file.FullName.Substring($PSScriptRoot.Length + 1).Replace('\', '/')
+        [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file.FullName, $entryName) | Out-Null
+    }
+} finally {
+    try {
+        if ($archive) { $archive.Dispose() }
+    } finally {
+        $stream.Dispose()
+    }
 }
+
+Write-Host "ZIPファイルを作成しました: $zipName" -ForegroundColor Green
+Write-Host ""
+Write-Host "ファイルサイズ:" -ForegroundColor Cyan
+$fileSize = (Get-Item -LiteralPath $zipName).Length
+$fileSizeKB = [math]::Round($fileSize / 1KB, 2)
+Write-Host "   $fileSizeKB KB" -ForegroundColor White
+Write-Host ""
+Write-Host "パッケージが正常に作成されました!" -ForegroundColor Green

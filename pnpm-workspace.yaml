@@ -11,7 +11,9 @@ overrides:
   shell-quote: '>=1.8.5'
   # GHSA-7p8r-x3mc-p8w7: バックスラッシュ由来 host confusion（web-ext > addons-linter > ajv）
   # ajv の依存範囲 ^3.0.1 内に収めるため 3 系に固定する
-  fast-uri: '^3.1.5'
+  fast-uri: '^3.1.9'
+  # GHSA-86w9-cpqp-85rv: 証明書検証の不備（web-ext > @devicefarmer/adbkit）
+  node-forge: '^1.4.2'
   # GHSA-rgw5-rvv9-x895: brace-expansion の CVE-2026-14257 緩和バイパス DoS（web-ext > ... > minimatch）
   # 修正版は 5.0.9 以降のみ（1.x〜4.x に patch は出ていない）。唯一の利用者である
   # minimatch@3 は brace-expansion を callable として require するため、下の

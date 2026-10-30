@@ -18,7 +18,7 @@ pnpm run build              # 上記2つを順次実行
 ```
 
 - テスト・Lint・フォーマッタの package scripts は**未定義**。`pnpm test` などは存在しない。Firefox 配布前には下記の `pnpm exec web-ext lint` を実行する。
-- CI と同じ依存解決には Node.js 22 / pnpm 11 と `pnpm install --frozen-lockfile` を使う。アイコン生成だけなら `PUPPETEER_SKIP_DOWNLOAD=1` で Chromium のダウンロードを省略できる。
+- CI と同じ依存解決には Node.js 26.13.0 / pnpm 12.16.1 と `pnpm install --frozen-lockfile` を使う。アイコン生成だけなら `PUPPETEER_SKIP_DOWNLOAD=1` で Chromium のダウンロードを省略できる。
 - 拡張機能本体の開発には `sharp` しか不要。`generate-screenshots` はストア画像用途で、普段のコード編集では実行しなくてよい。
 - `generate-screenshots` は Chromium の応答待ちで数分かかることがある。CDP の protocol timeout は 300 秒なので、出力が止まって見えても重複起動せず完了を待つ。
 
@@ -28,7 +28,7 @@ devDependency の `web-ext` 配下に出た脆弱性を、上流が未修正の�
 
 `brace-expansion` は修正版が **5.0.9 以降**（1.x〜4.x に patch なし）で、唯一の利用者 `minimatch@3` が `require('brace-expansion')` を関数として呼ぶ一方、5.x は named export の `{ expand }` になった。そのため [patches/minimatch@3.1.5.patch](patches/minimatch@3.1.5.patch) で両形式を受け付ける 1 行の interop シムを当てている。
 
-- pnpm 11 は `package.json` の `pnpm` フィールドを**読まない**。overrides / patchedDependencies は `pnpm-workspace.yaml` に書く。
+- overrides / patchedDependencies は `pnpm-workspace.yaml` に書く。開発用Nodeの正本は `.node-version`、pnpmの正本は `package.json` の `packageManager` とする。
 - `patchedDependencies` のキーは `minimatch@3.1.5` と exact version 固定。**minimatch が 3.1.6 以降へ上がると `pnpm install` が patch 未適用で失敗する**。その場合は `pnpm patch minimatch@<新version>` で同じ 1 行シムを当て直し、キーを更新する。
 - 上流（eslint / addons-linter）が minimatch 10 系へ移行したら、この override と patch は両方とも削除してよい。
 
@@ -46,7 +46,7 @@ Compress-Archive -Path manifest.json,icons,src -DestinationPath clean-reload.zip
 ```
 `clean-reload.zip` に `manifest.json` + `icons/` + `src/` のみ含める（`node_modules`, `webstore/`, `scripts/` は除外）。
 
-`zip.ps1` / `zip.sh` は現在 `npm install` を呼ぶため、pnpm の overrides / patch を使う本リポジトリのリリース検証には使用しない。正式な公開パッケージは `.github/workflows/publish.yml` と同じく、pnpm で依存とアイコンを用意して上記3パスだけをZIP化する。
+PowerShell スクリプトは PowerShell 7 系（`pwsh`、検証版 7.6.9）で実行する。`zip.ps1` / `zip.sh` は `pnpm install --frozen-lockfile` と `pnpm run generate-icons` を実行し、上記3パスだけを `clean-reload.zip` にまとめる。既存ZIPは置き換え、`*.DS_Store` / `*.swp` / `*~` は除外する。正式な公開パッケージも `.github/workflows/publish.yml` で同じ依存解決と配布対象を使う。
 
 ## リリース (Chrome Web Store + Firefox AMO 自動公開)
 
