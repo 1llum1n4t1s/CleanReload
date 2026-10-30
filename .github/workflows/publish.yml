@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  RELEASE_SOURCE_SHA: ${{ github.sha }}
+  RELEASE_REF_NAME: ${{ github.ref_name }}
+
 jobs:
   publish:
     name: Chrome Web Store 公開
@@ -40,17 +44,18 @@ jobs:
 
       - name: pnpm セットアップ
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
-        with:
-          version: 11
 
       - name: Node セットアップ
         uses: actions/setup-node@v7.1.0
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
 
       - name: 依存インストール
         run: pnpm install --frozen-lockfile
+
+      - name: 全 variant の release 入力を固定・照合
+        run: node scripts/verify-release-artifact.mjs source
 
       - name: package.json バージョンも一致するか確認
         env:
@@ -83,6 +88,8 @@ jobs:
           # 同 version 再 push（release ブランチ再 push 等）では既にアップロード/審査中で
           # cli が exit 1 になる。これは無害な重複なので warning 化して CI を green に保つ。
           # v4 以降はコマンド省略（upload/publish 未指定）で upload+publish が自動実行される。
+          # 検証失敗は重複 upload の warning 処理へ入れず、即時停止する。
+          node scripts/verify-release-artifact.mjs chrome clean-reload.zip
           set +e
           pnpm exec chrome-webstore-upload \
             --source clean-reload.zip 2>&1 | tee /tmp/cws.log
@@ -125,17 +132,18 @@ jobs:
 
       - name: pnpm セットアップ
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
-        with:
-          version: 11
 
       - name: Node セットアップ
         uses: actions/setup-node@v7.1.0
         with:
-          node-version: '22'
+          node-version-file: '.node-version'
           cache: 'pnpm'
 
       - name: 依存インストール
         run: pnpm install --frozen-lockfile
+
+      - name: 全 variant の release 入力を固定・照合
+        run: node scripts/verify-release-artifact.mjs source
 
       - name: アイコン生成
         run: node scripts/generate-icons.js
@@ -175,7 +183,7 @@ jobs:
           # "Approval: timeout exceeded" を返して exit 1 になる既知挙動（submission 自体は受理済み）。
           # timeout / 同 version 重複は warning 化して CI を green に保つ。それ以外の exit 1 は fail。
           set +e
-          pnpm exec web-ext sign \
+          node scripts/sign-firefox-verified.mjs sign \
             --source-dir=firefox-build \
             --artifacts-dir=web-ext-artifacts \
             --channel=listed \
@@ -183,7 +191,10 @@ jobs:
           rc=${PIPESTATUS[0]}
           set -e
           if [ "$rc" -ne 0 ]; then
-            if grep -q "Approval: timeout exceeded" /tmp/web-ext.log; then
+            if grep -q "ARTIFACT_GUARD_REJECTED" /tmp/web-ext.log; then
+              echo "::error::提出実物の検証に失敗したため AMO への送信を停止しました"
+              exit "$rc"
+            elif grep -q "Approval: timeout exceeded" /tmp/web-ext.log; then
               echo "::warning::web-ext sign が timeout exceeded で exit 1 を返したが submission は AMO に受理済み。CI green 化のため exit 0 扱いに変換します"
             elif grep -qiE "already exists|conflict" /tmp/web-ext.log; then
               echo "::warning::AMO に既に同 version が存在するため version conflict で fail。CI green 化のため exit 0 扱いに変換します"
