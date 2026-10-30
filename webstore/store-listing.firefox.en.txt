@@ -46,14 +46,14 @@ Handy for web development and debugging, where you need to bypass stale cached f
 
 Firefox's browsingData API differs from Chrome's, so this extension behaves as follows on Firefox:
 
-- Service Worker registration: removed per the target tab's hostname (origin-scoped precise removal is not supported by Firefox, so it falls back to hostname scope).
+- Service Worker registration: removed per the target tab's hostname (origin-scoped precise removal is not supported by Firefox). If this removal fails, the extension attempts to unregister Service Workers across Firefox.
 - CacheStorage (DOM Cache API): Firefox's browsingData API cannot delete it, so saved CacheStorage data remains.
 - HTTP cache: because Firefox's removeCache API cannot be scoped to a specific origin, clicking clears Firefox's entire HTTP cache (the Chrome edition clears only the current origin).
 
 After waiting for Service Worker registration removal, the page reloads while bypassing the HTTP cache, without waiting for HTTP cache deletion to finish. Reloading continues even if deletion fails. Since the click is an explicit user action, the behavior above is within the intended reset.
 
 ■ Privacy
-Everything runs locally in the browser; there is no communication with external servers and no collection of personal data. No remote code is loaded. See docs/privacy-policy.en.md for details.
+Everything runs locally in the browser; there is no communication with external servers and no collection of personal data. Browsing history, cookies, passwords, and other data are never accessed. No remote code is loaded. See docs/privacy-policy.en.md for details.
 
 ■ License
 MIT License

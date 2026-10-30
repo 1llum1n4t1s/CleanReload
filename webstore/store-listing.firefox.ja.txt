@@ -46,14 +46,14 @@ Web 開発やデバッグの際に、キャッシュされた古いファイル�
 
 Firefox の browsingData API は Chrome と仕様が異なります。本拡張機能は Firefox 上で次のように動作します。
 
-・Service Worker 登録: 対象タブのホスト名単位で削除します（origin 単位の精密削除は Firefox が未対応のため、ホスト名単位にフォールバック）。
+・Service Worker 登録: 対象タブのホスト名単位で削除します（origin 単位の精密削除は Firefox が未対応）。この削除に失敗した場合は、Firefox 全体の Service Worker 登録解除を試みます。
 ・CacheStorage（DOM Cache API）: Firefox の browsingData API では削除できないため、保存済みデータは残ります。
 ・HTTP キャッシュ: Firefox の removeCache API は対象オリジンを絞り込めない仕様のため、クリック時に Firefox 全体の HTTP キャッシュをクリアします（Chrome 版は該当オリジンのみ）。
 
 Service Worker 登録の解除処理を待った後、HTTP キャッシュの削除完了は待たずに、キャッシュをバイパスしてページを再読み込みします。削除に失敗しても再読み込みは継続します。クリック操作はユーザーの明示的な意思で行われるため、上記の挙動は意図したリセットの範囲内です。
 
 ■ プライバシー
-すべてブラウザ内で完結し、外部サーバーへの通信・個人情報の収集は一切行いません。リモートコードの読み込みもありません。プライバシーポリシーは docs/privacy-policy.md を参照。
+すべてブラウザ内で完結し、外部サーバーへの通信・個人情報の収集は一切行いません。閲覧履歴・Cookie・パスワード等には一切アクセスしません。リモートコードの読み込みもありません。プライバシーポリシーは docs/privacy-policy.md を参照。
 
 ■ ライセンス
 MIT License

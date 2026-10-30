@@ -37,6 +37,10 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 3. 重複排除した対象群を単一タブと同じ `clearCacheData()` に渡し、その処理が戻ったら各タブをHTTPキャッシュバイパスで再読み込みする。
 4. `file:`タブはキャッシュ削除集合へ入れず、再読み込み対象には残す。
 
+### DNSキャッシュ画面への移動
+
+Chromium 系では Action の右クリックメニューから `chrome://net-internals/#dns` を新しいタブで開く。Brave / Edge でも各ブラウザの内部ページへ解決される。DNS キャッシュの削除は利用者が画面内の `Clear host cache` を押して行い、拡張機能から自動削除はしない。Firefox では内部ページを開く制限があるためメニューを表示しない。
+
 ### 全バックグラウンドタブの強制スリープ
 
 1. 右クリックメニューから `active: false` かつ `discarded: false` のタブを列挙する。

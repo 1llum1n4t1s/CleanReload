@@ -103,9 +103,25 @@ api.runtime.onInstalled.addListener(() => {
     title: '全バックグラウンドタブを強制スリープ',
     contexts: ['action'],
   });
+  if (!isFirefox) {
+    api.contextMenus.create({
+      id: 'open-dns-cache',
+      title: 'DNSキャッシュの削除画面を開く',
+      contexts: ['action'],
+    });
+  }
 });
 
 api.contextMenus.onClicked.addListener(async (info) => {
+  if (info.menuItemId === 'open-dns-cache') {
+    if (isFirefox) return;
+    // Brave / Edge でも chrome: の内部URLは各ブラウザのページへ解決される。
+    await api.tabs.create({ url: 'chrome://net-internals/#dns' }).catch(error => {
+      console.warn('Clean Reload: DNSキャッシュ画面を開けませんでした:', error.message);
+    });
+    return;
+  }
+
   if (info.menuItemId === 'discard-all-background-tabs') {
     const tabs = await api.tabs.query({ active: false, discarded: false });
     const discardTargets = tabs.filter(tab => Number.isInteger(tab.id));
