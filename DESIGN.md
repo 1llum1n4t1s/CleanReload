@@ -17,7 +17,7 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 | `src/background/background.js` | Action、右クリックメニュー、キャッシュ削除、再読み込み、タブ破棄 | 唯一の拡張ランタイム。Content Script や popup は持たない |
 | `icons/`、`scripts/` | SVG正本から配布用PNGを生成 | 生成PNGはGit管理せず、ローカルとCIで再生成する |
 | `webstore/`、`docs/` | Chrome掲載文は `webstore/store-listing.txt`、Firefox掲載文は `webstore/store-listing.firefox.{ja,en}.txt`、プライバシーは `docs/privacy-policy{,.en}.md` | 掲載画像は `webstore/generate-screenshots.js` がHTMLから生成。いずれもランタイム配布物には含めない |
-| `.amo-metadata.json`、`vava.config.json` | AMO提出時のカテゴリ・ライセンス、listing更新時の入力定義 | バイナリ提出と説明文更新は別経路。後者は掲載文・プライバシーファイルを参照する |
+| `.amo-metadata.json`、`AGENTS.md` | AMO提出時のカテゴリ・ライセンス、listing更新時の入力定義 | バイナリ提出と説明文更新は別経路。後者は掲載文・プライバシーファイルを参照する |
 | `.github/workflows/publish.yml` | Chrome Web StoreとFirefox AMOへの公開 | `release/x.y.z` pushで2ジョブを独立実行する |
 | `../vps-web/lp/cleanreload/` | LP、プライバシー、静的素材のHTTP配信 | 未知パスは404。既知パスはGET / HEADを許可し、その他のmethodは405にする |
 

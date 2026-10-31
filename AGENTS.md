@@ -91,12 +91,6 @@ Firefox 版は **Chrome と同じ `src/` を共有**し、`manifest.firefox.json
 `release/x.y.z` push で Chrome `publish` job と**並列・独立**に実行（`if: success() || failure()` で Chrome 失敗時も submit）。GitHub Secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` を使用。firefox-build 構築 → `web-ext lint` → `web-ext sign` の順。
 
 ### AMO listing（説明文）の更新は API 経由（スクショは手動）
-listing の name / summary / description / homepage / support_url / categories / privacy_policy は **AMO API v5 で PATCH 可能**。`/vava` スキルの `~/.agents/skills/vava/scripts/update-amo-listing.mjs` が `vava.config.json` の `amo` ブロック + `webstore/store-listing.firefox.{ja,en}.txt` + `docs/privacy-policy{,.en}.md` を読む。リポジトリルートから実行する:
-```powershell
-node "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs" --dry-run
-# 公開依頼がある場合だけ、AMO_JWT_ISSUER / AMO_JWT_SECRET を環境変数へ設定して実行
-node "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs"
-```
 `--dry-run` は資格情報・ネットワークなしで入力を検証する。このスクリプトはスクリーンショットを更新しないため、AMO Developer Hub から手動アップロードする（`webstore/images/*-1280x800.png`）。
 
 ## 制約事項
@@ -111,3 +105,11 @@ node "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs"
 ## 製品ページの保守
 
 配信元・編集元・公開先は [DESIGN.md](DESIGN.md#製品ページの配信先) を参照する。公開URLを維持し、静的ファイルの配信は `../vps-web/deploy/deploy-lp.ps1` を使う。
+
+### ストア掲載情報
+
+リポジトリルートで実行する。AMO 更新は公開依頼時のみ実行し、事前に同じコマンドへ `--dry-run` を付けて入力を確認する。
+
+```powershell
+node "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs" --slug 'clean-reload' --listing 'ja=webstore/store-listing.firefox.ja.txt' --listing 'en-US=webstore/store-listing.firefox.en.txt' --privacy 'ja=docs/privacy-policy.md' --privacy 'en-US=docs/privacy-policy.en.md' --name 'ja=Clean Reload' --name 'en-US=Clean Reload' --homepage 'https://github.com/1llum1n4t1s/CleanReload' --support-url 'https://github.com/1llum1n4t1s/CleanReload/issues' --category 'other'
+```
