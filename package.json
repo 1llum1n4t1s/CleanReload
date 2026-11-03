@@ -2,15 +2,16 @@
   "name": "clean-reload",
   "version": "1.0.18",
   "type": "commonjs",
-  "packageManager": "pnpm@12.16.1",
+  "packageManager": "bun@1.4.4",
   "description": "ワンクリックで Service Worker と HTTP キャッシュをクリアし、Chrome では CacheStorage も削除して再読み込みする拡張機能",
   "scripts": {
-    "generate-icons": "node scripts/generate-icons.js",
-    "generate-screenshots": "node webstore/generate-screenshots.js",
-    "build": "pnpm run generate-icons && pnpm run generate-screenshots"
+    "deps": "bun scripts/Install-Dependencies.mjs",
+    "generate-icons": "bun scripts/generate-icons.js",
+    "generate-screenshots": "bun webstore/generate-screenshots.js",
+    "build": "bun --bun run generate-icons && bun --bun run generate-screenshots",
+    "test:dependencies": "bun test ./scripts/dependency-security.test.cjs"
   },
   "devDependencies": {
-    "chrome-webstore-upload-cli": "^4.0.2",
     "puppeteer": "^25.16.0",
     "sharp": "^0.35.5",
     "web-ext": "^10.8.0"
@@ -23,5 +24,26 @@
     "cache-bypass"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "adm-zip": ">=0.6.0",
+    "shell-quote": ">=1.8.5",
+    "fast-uri": "^3.1.9",
+    "node-forge": "^1.4.2",
+    "brace-expansion": "^5.0.9",
+    "undici": ">=7.29.0",
+    "js-yaml": "^4.3.1",
+    "minimatch": "^11.0.4",
+    "multimatch": "^8.0.0"
+  },
+  "trustedDependencies": [
+    "puppeteer",
+    "sharp"
+  ],
+  "patchedDependencies": {
+    "@eslint/eslintrc@3.3.7": "patches/@eslint%2Feslintrc@3.3.7.patch",
+    "deepmerge@4.3.1": "patches/deepmerge@4.3.1.patch",
+    "@eslint/config-array@0.21.2": "patches/@eslint%2Fconfig-array@0.21.2.patch",
+    "web-ext@10.8.0": "patches/web-ext@10.8.0.patch"
+  }
 }

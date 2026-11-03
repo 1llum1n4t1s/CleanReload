@@ -12,6 +12,11 @@ env:
   RELEASE_SOURCE_SHA: ${{ github.sha }}
   RELEASE_REF_NAME: ${{ github.ref_name }}
 
+concurrency:
+  group: publish-${{ github.repository }}
+  cancel-in-progress: false
+  queue: max
+
 jobs:
   publish:
     name: Chrome Web Store 公開
@@ -20,8 +25,18 @@ jobs:
       # CI では scripts/generate-icons.js（sharp）しか実行しないので puppeteer の Chromium (~200MB) は不要
       PUPPETEER_SKIP_DOWNLOAD: '1'
     steps:
-      - name: リポジトリをチェックアウト
-        uses: actions/checkout@v7.0.1
+      - name: Checkout release commit with native git
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" submodule update --init --recursive
 
       - name: バージョンを取得
         id: version
@@ -42,26 +57,23 @@ jobs:
           fi
           echo "✅ ブランチ名と manifest バージョン一致: $expected"
 
-      - name: pnpm セットアップ
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
-
-      - name: Node セットアップ
-        uses: actions/setup-node@v7.1.0
-        with:
-          node-version-file: '.node-version'
-          cache: 'pnpm'
+      - name: Prepare native Bun build toolchain
+        shell: pwsh
+        run: ./scripts/Initialize-BunBuild.ps1 -VersionFile 'package.json'
 
       - name: 依存インストール
-        run: pnpm install --frozen-lockfile
+        run: bun run deps
+      - name: Validate dependency security patches
+        run: bun run test:dependencies
 
       - name: 全 variant の release 入力を固定・照合
-        run: node scripts/verify-release-artifact.mjs source
+        run: bun scripts/verify-release-artifact.mjs source
 
       - name: package.json バージョンも一致するか確認
         env:
           MANIFEST_VERSION: ${{ steps.version.outputs.version }}
         run: |
-          pkg_ver=$(node -p "require('./package.json').version")
+          pkg_ver=$(bun -p "require('./package.json').version")
           if [ "$pkg_ver" != "$MANIFEST_VERSION" ]; then
             echo "::error::package.json ($pkg_ver) と manifest.json ($MANIFEST_VERSION) が不一致"
             exit 1
@@ -69,7 +81,7 @@ jobs:
           echo "✅ package.json バージョン一致: $pkg_ver"
 
       - name: アイコン生成
-        run: node scripts/generate-icons.js
+        run: bun scripts/generate-icons.js
 
       - name: zip パッケージを作成
         run: |
@@ -85,25 +97,10 @@ jobs:
           EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
           PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
         run: |
-          # 同 version 再 push（release ブランチ再 push 等）では既にアップロード/審査中で
-          # cli が exit 1 になる。これは無害な重複なので warning 化して CI を green に保つ。
-          # v4 以降はコマンド省略（upload/publish 未指定）で upload+publish が自動実行される。
-          # 検証失敗は重複 upload の warning 処理へ入れず、即時停止する。
-          node scripts/verify-release-artifact.mjs chrome clean-reload.zip
-          set +e
-          pnpm exec chrome-webstore-upload \
-            --source clean-reload.zip 2>&1 | tee /tmp/cws.log
-          rc=${PIPESTATUS[0]}
-          set -e
-          if [ "$rc" -ne 0 ]; then
-            if grep -qiE "ITEM_NOT_UPDATABLE|pending review|ready to publish|cannot be updated|already (published|exists|uploaded)|currently in review|item that is in review|in_review|version already|DUPLICATE_VERSION" /tmp/cws.log; then
-              echo "::warning::Chrome Web Store に同 version が既にアップロード/公開済み。CI green 化のため exit 0 扱いに変換します"
-            else
-              echo "::error::chrome-webstore-upload が同 version 重複以外の理由で失敗しました (rc=$rc)。ログ確認要"
-              exit "$rc"
-            fi
-          fi
-          echo "🎉 Chrome Web Store への公開リクエストを送信したよ〜"
+          pwsh -NoProfile -File scripts/Test-PublishCws.ps1 -WorkDirectory "$RUNNER_TEMP/cws-publisher-tests"
+          bun scripts/verify-release-artifact.mjs chrome clean-reload.zip > "$RUNNER_TEMP/clean-reload-verified.json"
+          CHROME_SHA256=$(python3 -c 'import json,os; print(json.load(open(os.environ["RUNNER_TEMP"]+"/clean-reload-verified.json"))["sha256"])')
+          pwsh -NoProfile -File scripts/Publish-Cws.ps1 -Archive "clean-reload.zip" -ExpectedSha256 "$CHROME_SHA256"
 
   publish-firefox:
     name: Firefox AMO に submission
@@ -115,8 +112,18 @@ jobs:
       # CI では generate-icons（sharp）しか実行しないので puppeteer の Chromium DL は不要
       PUPPETEER_SKIP_DOWNLOAD: '1'
     steps:
-      - name: リポジトリをチェックアウト
-        uses: actions/checkout@v7.0.1
+      - name: Checkout release commit with native git
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" fetch --no-tags --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" submodule update --init --recursive
 
       - name: ブランチ名とバージョンの整合性を確認
         env:
@@ -130,29 +137,25 @@ jobs:
           fi
           echo "✅ ブランチ名と manifest.firefox バージョン一致: $expected"
 
-      - name: pnpm セットアップ
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
-
-      - name: Node セットアップ
-        uses: actions/setup-node@v7.1.0
-        with:
-          node-version-file: '.node-version'
-          cache: 'pnpm'
+      - name: Prepare native Bun build toolchain
+        shell: pwsh
+        run: ./scripts/Initialize-BunBuild.ps1 -VersionFile 'package.json'
 
       - name: 依存インストール
-        run: pnpm install --frozen-lockfile
+        run: bun run deps
+      - name: Validate dependency security patches
+        run: bun run test:dependencies
 
       - name: 全 variant の release 入力を固定・照合
-        run: node scripts/verify-release-artifact.mjs source
+        run: bun scripts/verify-release-artifact.mjs source
 
       - name: アイコン生成
-        run: node scripts/generate-icons.js
+        run: bun scripts/generate-icons.js
 
       - name: Firefox 用ソースディレクトリを構築
         # manifest.firefox.json を manifest.json として配置し、icons / src を同梱。
         # CleanReload は _locales を使わない（name / description 直書き）ので _locales のコピーは不要。
         # background は manifest.firefox.json 側で scripts 配列にしてある（Firefox MV3 は service_worker 非対応）。
-        # web-ext sign は zip ではなく source-dir を受け取り自身で xpi を構築するため source dir のまま渡す。
         run: |
           mkdir -p firefox-build
           cp manifest.firefox.json firefox-build/manifest.json
@@ -163,46 +166,22 @@ jobs:
           ls -la firefox-build/
 
       - name: web-ext lint（AMO validator 相当チェック）
-        run: pnpm exec web-ext lint --source-dir=firefox-build
+        run: bun --bun run web-ext lint --source-dir=firefox-build
 
-      - name: Firefox AMO に submit (web-ext sign --channel=listed)
-        # web-ext 10+ では submission API がデフォルト動作。--channel=listed で AMO 公開（人間レビュー入り）。
-        # AMO API キー（JWT issuer / secret）は GitHub Secrets:
-        #   gh secret set AMO_JWT_ISSUER / gh secret set AMO_JWT_SECRET
+      - name: Firefox AMO に HTTP submission
         env:
           WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
           WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
         run: |
-          if [ -z "$WEB_EXT_API_KEY" ] || [ -z "$WEB_EXT_API_SECRET" ]; then
-            echo "::error::AMO_JWT_ISSUER / AMO_JWT_SECRET の GitHub Secrets が未設定です"
-            echo "  JWT 発行: https://addons.mozilla.org/ja/developers/addon/api/key/"
-            echo "  登録: gh secret set AMO_JWT_ISSUER / gh secret set AMO_JWT_SECRET"
-            exit 1
-          fi
-          # web-ext sign --channel=listed は AMO の auto-sign を待たずに約 15 分で
-          # "Approval: timeout exceeded" を返して exit 1 になる既知挙動（submission 自体は受理済み）。
-          # timeout / 同 version 重複は warning 化して CI を green に保つ。それ以外の exit 1 は fail。
-          set +e
-          node scripts/sign-firefox-verified.mjs sign \
-            --source-dir=firefox-build \
-            --artifacts-dir=web-ext-artifacts \
-            --channel=listed \
-            --amo-metadata=.amo-metadata.json 2>&1 | tee /tmp/web-ext.log
-          rc=${PIPESTATUS[0]}
-          set -e
-          if [ "$rc" -ne 0 ]; then
-            if grep -q "ARTIFACT_GUARD_REJECTED" /tmp/web-ext.log; then
-              echo "::error::提出実物の検証に失敗したため AMO への送信を停止しました"
-              exit "$rc"
-            elif grep -q "Approval: timeout exceeded" /tmp/web-ext.log; then
-              echo "::warning::web-ext sign が timeout exceeded で exit 1 を返したが submission は AMO に受理済み。CI green 化のため exit 0 扱いに変換します"
-            elif grep -qiE "already exists|conflict" /tmp/web-ext.log; then
-              echo "::warning::AMO に既に同 version が存在するため version conflict で fail。CI green 化のため exit 0 扱いに変換します"
-            else
-              echo "::error::web-ext sign が timeout exceeded / version conflict 以外の理由で失敗しました (rc=$rc)。ログ確認要"
-              exit "$rc"
-            fi
-          fi
-          echo "🦊 Firefox AMO への submission 送信完了（レビュー待ち）"
-          echo "🔗 AMO Developer Hub: https://addons.mozilla.org/developers/"
-          echo "⏰ レビュー結果は通常 1〜数日でメール通知"
+          pwsh -NoProfile -File scripts/Test-PublishAmo.ps1 -WorkDirectory "$RUNNER_TEMP/amo-publisher-tests"
+          test ! -e firefox-build/.amo-upload-uuid
+          mkdir -p web-ext-artifacts
+          ARCHIVE="$GITHUB_WORKSPACE/web-ext-artifacts/unsigned-submission.xpi"
+          test ! -e "$ARCHIVE"
+          pwsh -NoProfile -File scripts/Test-FirefoxArchive.ps1 -WorkDirectory "$RUNNER_TEMP/firefox-archive-tests"
+          pwsh -NoProfile -File scripts/New-FirefoxArchive.ps1 -SourceDirectory firefox-build -Archive "$ARCHIVE" > web-ext-artifacts/build-receipt.json
+          VERSION=$(python3 -c 'import json; print(json.load(open("firefox-build/manifest.json"))["version"])')
+          ADDON_ID=$(python3 -c 'import json; m=json.load(open("firefox-build/manifest.json")); print(m.get("browser_specific_settings",m.get("applications",{}))["gecko"]["id"])')
+          bun scripts/verify-release-artifact.mjs firefox "$ARCHIVE" > web-ext-artifacts/verified.json
+          SHA256=$(python3 -c 'import json; print(json.load(open("web-ext-artifacts/verified.json"))["sha256"])')
+          pwsh -NoProfile -File scripts/Publish-Amo.ps1 -Archive "$ARCHIVE" -Metadata .amo-metadata.json -AddonId "$ADDON_ID" -ExpectedVersion "$VERSION" -ExpectedSha256 "$SHA256"

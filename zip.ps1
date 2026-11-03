@@ -1,4 +1,4 @@
-﻿#requires -Version 7.0
+#requires -Version 7.0
 # クリーンリロード 拡張機能パッケージ生成スクリプト
 # 使い方: pwsh -NoProfile -File zip.ps1
 
@@ -12,9 +12,9 @@ Set-Location -LiteralPath $PSScriptRoot
 
 # ロックファイルと同じ依存関係でアイコン生成
 Write-Host "アイコンを生成中..." -ForegroundColor Yellow
-pnpm install --frozen-lockfile
-if ($LASTEXITCODE -ne 0) { throw "pnpm install に失敗しました" }
-pnpm run generate-icons
+bun run deps
+if ($LASTEXITCODE -ne 0) { throw "bun install に失敗しました" }
+bun --bun run generate-icons
 if ($LASTEXITCODE -ne 0) { throw "アイコン生成に失敗しました" }
 
 # 配布対象だけを直接ZIP化し、既存ZIPの内容を置き換える

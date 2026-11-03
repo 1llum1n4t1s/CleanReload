@@ -11,8 +11,8 @@ echo ""
 
 # アイコン生成 (失敗時は set -e により即 exit)
 echo "アイコン生成中..."
-pnpm install --frozen-lockfile
-pnpm run generate-icons
+bun run deps
+bun --bun run generate-icons
 
 echo "ZIPファイルを作成中..."
 

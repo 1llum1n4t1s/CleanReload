@@ -2,6 +2,8 @@
 
 このファイルは、このリポジトリで作業するエージェント向けのコマンド・検証手順・制約を定める。システム構造と設計判断の正本は [DESIGN.md](DESIGN.md) を参照する。
 
+Bun は `package.json` の `packageManager` (`bun@1.4.4`) を正本とする。`bunfig.toml` の `minimumReleaseAge = 86400` は従来の24時間の公開待機を維持し、例外は `minimumReleaseAgeExcludes`、依存の実行許可は `package.json` の `trustedDependencies` に置く。CI は `scripts/Initialize-BunBuild.ps1 -VersionFile package.json` で同じ実行環境を準備する。
+
 ## プロジェクト概要
 
 Clean Reload — ワンクリックで Service Worker 登録と HTTP キャッシュをクリアして再読み込みし、Chrome では CacheStorage も削除するスーパーリロードと、右クリックメニューからの全タブ一括リロード・全バックグラウンドタブ強制スリープを提供する Chrome / Firefox 拡張機能（Manifest V3）。
@@ -11,51 +13,47 @@ Clean Reload — ワンクリックで Service Worker 登録と HTTP キャッ�
 ## ビルドコマンド
 
 ```bash
-pnpm install                # 依存関係インストール（sharp + puppeteer/Chromium DL、初回は重い）
-pnpm run generate-icons     # icons/icon.svg → icons/icon-{16,48,128}.png（sharp のみ使用）
-pnpm run generate-screenshots # webstore/*.html → webstore/images/*.png（puppeteer 使用）
-pnpm run build              # 上記2つを順次実行
+bun install                # 依存関係インストール（sharp + puppeteer/Chromium DL、初回は重い）
+bun --bun run generate-icons     # icons/icon.svg → icons/icon-{16,48,128}.png（sharp のみ使用）
+bun --bun run generate-screenshots # webstore/*.html → webstore/images/*.png（puppeteer 使用）
+bun --bun run build              # 上記2つを順次実行
 ```
 
-- テスト・Lint・フォーマッタの package scripts は**未定義**。`pnpm test` などは存在しない。Firefox 配布前には下記の `pnpm exec web-ext lint` を実行する。
-- CI と同じ依存解決には Node.js 26.13.0 / pnpm 12.16.1 と `pnpm install --frozen-lockfile` を使う。アイコン生成だけなら `PUPPETEER_SKIP_DOWNLOAD=1` で Chromium のダウンロードを省略できる。
+- テスト・Lint・フォーマッタの package scripts は**未定義**。`bun --bun run test` などは存在しない。Firefox 配布前には下記の `bun --bun run web-ext lint` を実行する。
+- CI と同じ依存解決には Bun 1.4.4 と `bun run deps` を使う。アイコン生成だけなら `PUPPETEER_SKIP_DOWNLOAD=1` で Chromium のダウンロードを省略できる。
 - 拡張機能本体の開発には `sharp` しか不要。`generate-screenshots` はストア画像用途で、普段のコード編集では実行しなくてよい。
 - `generate-screenshots` は Chromium の応答待ちで数分かかることがある。CDP の protocol timeout は 300 秒なので、出力が止まって見えても重複起動せず完了を待つ。
 
-### 依存の overrides / patch（[pnpm-workspace.yaml](pnpm-workspace.yaml)）
+### 依存の overrides / patch（[package.json](package.json)）
 
 devDependency の `web-ext` 配下に出た脆弱性を、上流が未修正のため `overrides` で解消している（`adm-zip` / `shell-quote` / `fast-uri` / `brace-expansion` / `undici` / `js-yaml`）。拡張機能の配布物には含まれない開発時専用の依存。
 
-`brace-expansion` は修正版が **5.0.9 以降**（1.x〜4.x に patch なし）で、唯一の利用者 `minimatch@3` が `require('brace-expansion')` を関数として呼ぶ一方、5.x は named export の `{ expand }` になった。そのため [patches/minimatch@3.1.5.patch](patches/minimatch@3.1.5.patch) で両形式を受け付ける 1 行の interop シムを当てている。
-
-- overrides / patchedDependencies は `pnpm-workspace.yaml` に書く。開発用Nodeの正本は `.node-version`、pnpmの正本は `package.json` の `packageManager` とする。
-- `patchedDependencies` のキーは `minimatch@3.1.5` と exact version 固定。**minimatch が 3.1.6 以降へ上がると `pnpm install` が patch 未適用で失敗する**。その場合は `pnpm patch minimatch@<新version>` で同じ 1 行シムを当て直し、キーを更新する。
-- 上流（eslint / addons-linter）が minimatch 10 系へ移行したら、この override と patch は両方とも削除してよい。
+minimatch は `^11.0.4` へ、旧 default import を使う multimatch は `^8.0.0` へ override する。`@eslint/eslintrc@3.3.7` の ESM import は `patches/@eslint%2Feslintrc@3.3.7.patch` で named import へ修正する。Bun の `patchedDependencies` で適用し、同パッケージ更新時は上流の import と patch の要否を確認する。旧 minimatch 3 の brace-expansion interop patch は不要になった。
 
 ## 開発時の読み込み
 
-1. `pnpm install && pnpm run generate-icons` でアイコン PNG を生成（`icons/icon-*.png` は gitignore なので初回必須）
+1. `bun install && bun --bun run generate-icons` でアイコン PNG を生成（`icons/icon-*.png` は gitignore なので初回必須）
 2. Chrome で `chrome://extensions/` → デベロッパーモードON → 「パッケージ化されていない拡張機能を読み込む」→ リポジトリルートを選択
 
 ## パッケージング
 
 ```powershell
-pnpm install --frozen-lockfile
-pnpm run generate-icons
+bun run deps
+bun --bun run generate-icons
 Compress-Archive -Path manifest.json,icons,src -DestinationPath clean-reload.zip -Force
 ```
 `clean-reload.zip` に `manifest.json` + `icons/` + `src/` のみ含める（`node_modules`, `webstore/`, `scripts/` は除外）。
 
-PowerShell スクリプトは PowerShell 7 系（`pwsh`、検証版 7.6.9）で実行する。`zip.ps1` / `zip.sh` は `pnpm install --frozen-lockfile` と `pnpm run generate-icons` を実行し、上記3パスだけを `clean-reload.zip` にまとめる。既存ZIPは置き換え、`*.DS_Store` / `*.swp` / `*~` は除外する。正式な公開パッケージも `.github/workflows/publish.yml` で同じ依存解決と配布対象を使う。
+PowerShell スクリプトは PowerShell 7 系（`pwsh`、検証版 7.6.9）で実行する。`zip.ps1` / `zip.sh` は `bun run deps` と `bun --bun run generate-icons` を実行し、上記3パスだけを `clean-reload.zip` にまとめる。既存ZIPは置き換え、`*.DS_Store` / `*.swp` / `*~` は除外する。正式な公開パッケージも `.github/workflows/publish.yml` で同じ依存解決と配布対象を使う。
 
 ## リリース (Chrome Web Store + Firefox AMO 自動公開)
 
 1. `manifest.json`、`manifest.firefox.json`、`package.json` の `version` を上げてコミット（3ファイルは一致必須。更新は `/vava` 経由）
 2. `release/x.y.z`（`x.y.z` は manifest の version と一致必須）ブランチを push
 3. [.github/workflows/publish.yml](.github/workflows/publish.yml) が 2 job を並列起動:
-   - **publish**（Chrome）: `pnpm install --frozen-lockfile` → `generate-icons` → zip → `pnpm exec chrome-webstore-upload --source clean-reload.zip`（v4 はサブコマンド省略でアップロードと公開を実行）
-   - **publish-firefox**（AMO）: firefox-build 構築 → `web-ext lint` → `web-ext sign --channel=listed`
-4. ブランチ名と manifest バージョンの整合性チェックあり（不一致なら fail）。Firefox の初回登録のみローカル sign（§Firefox AMO 対応）。
+   - **publish**（Chrome）: lockfile固定のbuild → ZIP実物verifier → receiptのSHA-256を `scripts/Publish-Cws.ps1` へ渡して提出する。
+   - **publish-firefox**（AMO）: firefox-build 構築 → `web-ext lint` → 最終XPI検証 → `scripts/Publish-Amo.ps1`
+4. ブランチ名と manifest バージョンの整合性チェックあり（不一致なら fail）。Firefox の初回登録のみ AMO Developer Hub で実施（§Firefox AMO 対応）。
 
 ## 構造と編集先
 
@@ -75,20 +73,12 @@ Firefox 版は **Chrome と同じ `src/` を共有**し、`manifest.firefox.json
 - gecko id は本拡張専用の UUID `{a4a7df25-9281-44f6-9d06-5959599c6473}`（他拡張と共有しない）。
 - version は `manifest.json` と `package.json` に一致させる（CI がversionの相互整合とブランチ名を照合）。
 
-### 初回 AMO 登録（ローカルで実施）
-1. ローカルで `pnpm install && node scripts/generate-icons.js`
-2. firefox-build を構築: `mkdir firefox-build && cp manifest.firefox.json firefox-build/manifest.json && cp -r icons src firefox-build/`
-3. `pnpm exec web-ext lint --source-dir=firefox-build`（errors 0 を確認）
-4. AMO の JWT credentials を `WEB_EXT_API_KEY`（issuer）/ `WEB_EXT_API_SECRET`（secret）へ設定し、値をログ/コミットに残さず実行する。提出メタは `.amo-metadata.json`（カテゴリ `other`、ライセンス MIT）を使う:
-   ```bash
-   pnpm exec web-ext sign --source-dir=firefox-build --channel=listed --amo-metadata=.amo-metadata.json
-   ```
-5. gecko id をキーに AMO 上へ新規 add-on が自動作成される。2 回目以降は CI の `publish-firefox` job が担う。
+### 初回 AMO 登録
 
-> **timeout の扱い**: `web-ext sign --channel=listed` が `Approval: timeout exceeded` で終了した場合、CI は提出済みとして warning 化する。同versionの重複も warning 化し、それ以外の失敗は fail にする。CI green は審査・公開完了を保証しないため、AMO 側の状態を確認する。
+初回は https://addons.mozilla.org/developers/ の「Submit a New Add-on」から、検証済みFirefox XPIをアップロードして登録する。GUIDは `{a4a7df25-9281-44f6-9d06-5959599c6473}` を維持し、categoriesは `other`、licenseはMITとする。PowerShell publisherは登録済みGUIDへの新version提出専用で、未登録の404では停止する。初回完了後はCIの `publish-firefox` jobが新versionの提出を担う。人手レビューの承認・公開はCI成功と区別する。
 
 ### CI（publish.yml の `publish-firefox` job）
-`release/x.y.z` push で Chrome `publish` job と**並列・独立**に実行（`if: success() || failure()` で Chrome 失敗時も submit）。GitHub Secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` を使用。firefox-build 構築 → `web-ext lint` → `web-ext sign` の順。
+`release/x.y.z` push で Chrome `publish` job と**並列・独立**に実行（`if: success() || failure()` で Chrome 失敗時も submit）。GitHub Secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` を使用。firefox-build 構築 → `web-ext lint` → `scripts/Publish-Amo.ps1` の順。
 
 ### AMO listing（説明文）の更新は API 経由（スクショは手動）
 `--dry-run` は資格情報・ネットワークなしで入力を検証する。このスクリプトはスクリーンショットを更新しないため、AMO Developer Hub から手動アップロードする（`webstore/images/*-1280x800.png`）。
@@ -111,5 +101,28 @@ Firefox 版は **Chrome と同じ `src/` を共有**し、`manifest.firefox.json
 リポジトリルートで実行する。AMO 更新は公開依頼時のみ実行し、事前に同じコマンドへ `--dry-run` を付けて入力を確認する。
 
 ```powershell
-node "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs" --slug 'clean-reload' --listing 'ja=webstore/store-listing.firefox.ja.txt' --listing 'en-US=webstore/store-listing.firefox.en.txt' --privacy 'ja=docs/privacy-policy.md' --privacy 'en-US=docs/privacy-policy.en.md' --name 'ja=Clean Reload' --name 'en-US=Clean Reload' --homepage 'https://github.com/1llum1n4t1s/CleanReload' --support-url 'https://github.com/1llum1n4t1s/CleanReload/issues' --category 'other'
+bun "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs" --slug 'clean-reload' --listing 'ja=webstore/store-listing.firefox.ja.txt' --listing 'en-US=webstore/store-listing.firefox.en.txt' --privacy 'ja=docs/privacy-policy.md' --privacy 'en-US=docs/privacy-policy.en.md' --name 'ja=Clean Reload' --name 'en-US=Clean Reload' --homepage 'https://github.com/1llum1n4t1s/CleanReload' --support-url 'https://github.com/1llum1n4t1s/CleanReload/issues' --category 'other'
 ```
+
+### CWS 公開のHTTP境界
+
+`publish.yml` はビルド済みZIPを `scripts/Publish-Cws.ps1`（PowerShell 7）へ渡す。既存のOAuth secrets・publisher/item IDを維持し、ZIPをストリーム送信し、upload成功を確認してからpublishする。重複・通信断・不明な応答を公開成功として扱わず、ストア状態を確認してから再開する。公開専用npm CLIは使用しない。変更時はHTTP fixtureで成功・版/ID不一致・upload失敗・publish拒否を確認する。
+
+### AMO 公開のHTTP境界
+
+公開workflowは生成した最終XPIを既存の配布物検証へ通し、SHA-256・GUID・versionを `scripts/Publish-Amo.ps1`（PowerShell 7）へ渡す。旧web-ext sign/承認タイムアウトを成功化する手順に代えて、JWT認証・全ページの非公開listed版検査・upload検証・GUIDに対するPUT提出の受付応答まで確認する。XPIの同一snapshotをhash検証と送信に使い、保存UUIDの再利用・重複・不明な受付結果は停止する。CI成功は審査完了・ストア公開を意味しない。
+
+CWS公開workflowはrepository固定のconcurrency groupで直列化する。同期uploadの成功・ID・版を確認した場合だけpublishし、非同期uploadはAPI v2でdraft版を要求と結び付けられないため停止する。APIにはuploadとpublishの原子的なCASが無いため、提出中はDashboardや他の手動公開操作を並行しない。
+
+## Bun依存の脆弱性検出
+
+依存の固定復元は `bun run deps` を使う。lock欠落・破損を拒否し、`[run] bun=true` 経由で依存のpostinstallまでBunで実行する。Node.jsがあるPCでも通常の `bun install` を直接使う経路へ戻さない。
+
+日次と手動実行では `bun audit` でlock全体を監査する。ローカルでも同じコマンドで確認できる。BunはDependabotの通常の更新PRには対応するが、脆弱性起点の自動修正PRには未対応なので、監査失敗の調査と依存更新は別途必要。警告を除外して成功扱いにしない。
+
+
+### 依存の暫定セキュリティ修正
+
+minimatch は 11.0.4 以降、multimatch は named import 対応の 8 系へ override する。ESLint 設定の ESM 経路は @eslint/eslintrc@3.3.7 と @eslint/config-array@0.21.2 の最小 import patch で互換性を保つ。web-ext@10.8.0 の FileFilter は Windows で windowsPathsNoEscape を明示し、開発用ファイルやアーカイブの除外を維持する。
+
+CVE-2026-93753（GHSA-gcqx-w48m-w2h4）の deepmerge 4.3.1 は公式修正版が未公開のため、patches/deepmerge@4.3.1.patch で戻り値への書込みを own データ属性にし、__proto__ 経由の prototype 汚染を防ぐ。bun run test:dependencies で web-ext → addons-linter の実解決先の攻撃入力と通常 API を検証する。Bun 標準の patchedDependencies で適用し、公式修正版の採用時に patch の要否を再確認する。バージョンベースの bun audit 警告は残るため、警告を除外したり成功扱いにしない。
