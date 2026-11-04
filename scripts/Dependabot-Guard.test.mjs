@@ -29,9 +29,9 @@ function fixture() {
   const state = { evidence, guardStatuses: [], rules, bypassAudited: true, sameHeadOpenPrs: 1, reviewDecision: null, mergeState: 'BLOCKED', auto: null, timeline: { complete: true, events: [] } };
   const calls = [];
   const args = {
-    repo: 'owner/repo', appId: 44, appBotId: 22, controllerBotNodeId: 'BOT_33', nonce, runUrl,
+    repo: 'owner/repo', appId: 44, appBotId: 22, appBotLogin: 'guard-app[bot]', controllerBotNodeId: 'BOT_33', nonce, runUrl,
     observe: async () => structuredClone(state),
-    postStatus: async status => { calls.push(status.state); state.guardStatuses.unshift({ ...status, id: 100 + calls.length, creator: { id: 22 } }); },
+    postStatus: async status => { calls.push(status.state); state.guardStatuses.unshift({ ...status, id: 100 + calls.length, creator: { id: 22, login: 'guard-app[bot]', type: 'Bot' } }); },
     reserve: async request => { calls.push('reserve'); assert.equal(request.sha, sha('b')); state.auto = { actorId: 'BOT_33', method: 'SQUASH' }; },
   };
   return { state, calls, args };
@@ -64,10 +64,10 @@ test('ドラフト化、他PRとのHEAD共有、レビュー待ちを保留す�
 test('解決済みintentとsuccessは対応を確認し、予約取消を勝手に再設定しない', async () => {
   const { state, calls, args } = fixture();
   state.guardStatuses = [
-    { id: 2, context: guard, state: 'success', creator: { id: 22 }, description: `guard-v1:7:${nonce}`, target_url: runUrl },
-    { id: 1, context: guard, state: 'pending', creator: { id: 22 }, description: `guard-v1:7:${nonce}`, target_url: runUrl },
+    { id: 2, context: guard, state: 'success', creator: { id: 22, login: 'guard-app[bot]', type: 'Bot' }, description: `guard-v1:7:${nonce}`, target_url: runUrl },
+    { id: 1, context: guard, state: 'pending', creator: { id: 22, login: 'guard-app[bot]', type: 'Bot' }, description: `guard-v1:7:${nonce}`, target_url: runUrl },
   ];
-  assert.equal(inspectGuardHistory({ statuses: state.guardStatuses, botId: 22, repo: 'owner/repo', pr: 7 }).pending, null);
+  assert.equal(inspectGuardHistory({ statuses: state.guardStatuses, botId: 22, botLogin: 'guard-app[bot]', repo: 'owner/repo', pr: 7 }).pending, null);
   await assert.rejects(guardCandidate(args));
   assert.deepEqual(calls, []);
 });

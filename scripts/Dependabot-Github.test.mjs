@@ -34,7 +34,7 @@ function fixture() {
           if (state.mutateContent) state.mutateContent(result);
           return { data: result };
         } },
-      users: { getByUsername: async ({ username }) => ({ data: username === 'github-actions[bot]' ? { node_id: 'BOT_33' } : { id: 22 } }) },
+      users: { getByUsername: async ({ username }) => { assert.equal(username, 'github-actions[bot]'); return { data: { node_id: 'BOT_33' } }; } },
       pulls: { get: async () => ({ data: state.pr }) },
       git: { getCommit: async ({ commit_sha }) => ({ data: commit_sha === sha('b')
         ? { sha: sha('b'), parents: [{ sha: sha('e') }] }
@@ -46,7 +46,6 @@ function fixture() {
     request: async (route, params) => {
       let data;
       switch (route) {
-        case 'GET /apps/{app_slug}': data = { id: 44, slug: 'guard-app' }; break;
         case 'GET /repos/{owner}/{repo}/pulls': data = state.prs; break;
         case 'GET /repos/{owner}/{repo}/rules/branches/{branch}': data = params.branch === 'main' ? rules : [{ ruleset_id: 51, type: 'creation' }, { ruleset_id: 51, type: 'update' }]; break;
         case 'GET /repos/{owner}/{repo}/rulesets/{ruleset_id}': data = { id: params.ruleset_id, enforcement: 'active', target: 'branch', source_type: 'Repository', source: '1llum1n4t1s/CleanReload', updated_at: '2026-01-01T00:00:00Z' }; break;
@@ -75,15 +74,23 @@ function fixture() {
     },
   };
   const fetchImpl = async (url, options) => {
-    assert.equal(url, `https://api.github.com/repos/1llum1n4t1s/CleanReload/statuses/${sha('b')}`);
     assert.equal(options.headers.authorization, 'Bearer fixture-token');
+    assert.ok(options.signal instanceof AbortSignal);
+    if (options.method === 'GET') {
+      assert.equal(options.redirect, 'error');
+      if (state.identityUnavailable) return { ok: false };
+      if (url === 'https://api.github.com/apps/guard-app') return { ok: true, json: async () => state.appIdentity ?? { id: 44, client_id: 'Iv1.example', slug: 'guard-app' } };
+      if (url === 'https://api.github.com/users/guard-app%5Bbot%5D') return { ok: true, json: async () => state.botIdentity ?? { id: 22, login: 'guard-app[bot]', type: 'Bot' } };
+      throw new Error(`unexpected identity request: ${url}`);
+    }
+    assert.equal(url, `https://api.github.com/repos/1llum1n4t1s/CleanReload/statuses/${sha('b')}`);
     const value = JSON.parse(options.body); state.writes.push(value.state);
-    state.statuses.unshift({ ...value, id: 100 + state.writes.length, creator: { id: 22 } });
+    state.statuses.unshift({ ...value, id: 100 + state.writes.length, creator: state.creatorOverride ?? { id: 22, login: 'guard-app[bot]', type: 'Bot' } });
     if (value.state === 'pending' && state.afterPending) await state.afterPending();
     if (value.state === 'success' && state.afterSuccess) await state.afterSuccess();
     return { ok: true };
   };
-  const args = { github, owner: '1llum1n4t1s', repo: 'CleanReload', workflowSha: sha('a'), appId: 44, appSlug: 'guard-app', appToken: 'fixture-token', rulesetId: 50, rulesetUpdatedAt: '2026-01-01T00:00:00Z', branchRulesetId: 51, branchRulesetUpdatedAt: '2026-01-01T00:00:00Z', protectedAfter: '2026-01-01T00:00:01Z', runId: 100, runAttempt: 1, event: 'workflow_run', eventHead: sha('b'), fetchImpl };
+  const args = { github, owner: '1llum1n4t1s', repo: 'CleanReload', workflowSha: sha('a'), appId: 44, appClientId: 'Iv1.example', appSlug: 'guard-app', expectedAppSlug: 'guard-app', appBotId: 22, appToken: 'fixture-token', rulesetId: 50, rulesetUpdatedAt: '2026-01-01T00:00:00Z', branchRulesetId: 51, branchRulesetUpdatedAt: '2026-01-01T00:00:00Z', protectedAfter: '2026-01-01T00:00:01Z', runId: 100, runAttempt: 1, event: 'workflow_run', eventHead: sha('b'), fetchImpl };
   return { state, args, rules };
 }
 
@@ -129,7 +136,9 @@ test('pending送信の応答断は同一statusの読戻しで確認できた場�
 test('status通信断でreadbackできない場合は再送も予約もしない', async () => {
   const data = fixture();
   let calls = 0;
-  data.args.fetchImpl = async (_url, options) => {
+  const fetch = data.args.fetchImpl;
+  data.args.fetchImpl = async (url, options) => {
+    if (options.method === 'GET') return fetch(url, options);
     calls++;
     assert.ok(options.signal instanceof AbortSignal);
     throw new DOMException('timed out', 'TimeoutError');
@@ -150,6 +159,29 @@ test('rule pin・base・sourceが不一致なら外部変更しない', async ()
   const old = fixture(); old.args.protectedAfter = '2026-01-04T00:00:00Z';
   assert.equal(await runGithubGuard(old.args), 'held: candidate count');
   assert.deepEqual(old.state.writes, []);
+});
+
+test('private Appのslug・bot ID・status発行者が監査値と一致しなければ保留する', async () => {
+  for (const change of [
+    x => x.args.expectedAppSlug = 'other-app', x => x.args.expectedAppSlug = '', x => x.args.appBotId = 0,
+    x => x.args.appId = 45, x => x.args.appClientId = 'wrong-client', x => x.args.appBotId = 23,
+    x => x.state.appIdentity = { id: 44, client_id: 'Iv1.example', slug: 'other-app' },
+    x => x.state.botIdentity = { id: 22, login: 'wrong[bot]', type: 'Bot' },
+    x => x.state.botIdentity = { id: 22, login: 'guard-app[bot]', type: 'User' },
+    x => x.state.identityUnavailable = true,
+  ]) {
+    const data = fixture(); change(data);
+    await assert.rejects(runGithubGuard(data.args));
+    assert.deepEqual(data.state.writes, []);
+  }
+  for (const creator of [
+    { id: 23, login: 'guard-app[bot]', type: 'Bot' }, { id: 22, login: 'other[bot]', type: 'Bot' },
+    { id: 22, login: 'guard-app[bot]', type: 'User' },
+  ]) {
+    const data = fixture(); data.state.creatorOverride = creator;
+    await assert.rejects(runGithubGuard(data.args));
+    assert.deepEqual(data.state.writes, ['pending']);
+  }
 });
 
 test('Dependabot branchのcreation/update両方が監査済ruleに含まれなければ保留する', async () => {

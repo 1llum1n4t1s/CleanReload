@@ -79,10 +79,11 @@ export async function hasGuardCandidate({ github, owner, repo, workflowSha, even
 }
 
 // trusted default branch以外のコードはcheckoutしない。全APIはGitHub標準トークンで読む。
-export async function runGithubGuard({ github, owner, repo, workflowSha, appId, appSlug, appToken, rulesetId, rulesetUpdatedAt, branchRulesetId, branchRulesetUpdatedAt, protectedAfter, runId, runAttempt, event, eventHead, fetchImpl = fetch }) {
+export async function runGithubGuard({ github, owner, repo, workflowSha, appId, appClientId, appSlug, expectedAppSlug, appBotId, appToken, rulesetId, rulesetUpdatedAt, branchRulesetId, branchRulesetUpdatedAt, protectedAfter, runId, runAttempt, event, eventHead, fetchImpl = fetch }) {
   if (owner !== '1llum1n4t1s' || repo !== 'CleanReload' || !/^[0-9a-f]{40}$/.test(workflowSha)
     || !positive(appId) || !positive(rulesetId) || !positive(branchRulesetId) || branchRulesetId === rulesetId || !positive(runId) || !positive(runAttempt)
-    || typeof appSlug !== 'string' || !/^[a-z0-9-]+$/.test(appSlug) || typeof appToken !== 'string' || !appToken
+    || typeof appClientId !== 'string' || !appClientId || typeof appSlug !== 'string' || !/^[a-z0-9-]+$/.test(appSlug) || appSlug !== expectedAppSlug
+    || !positive(appBotId) || typeof appToken !== 'string' || !appToken
     || typeof rulesetUpdatedAt !== 'string' || typeof branchRulesetUpdatedAt !== 'string'
     || !Number.isFinite(Date.parse(branchRulesetUpdatedAt)) || !Number.isFinite(Date.parse(protectedAfter))
     || Date.parse(branchRulesetUpdatedAt) >= Date.parse(protectedAfter) || !['workflow_run', 'workflow_dispatch'].includes(event)) fail();
@@ -93,16 +94,27 @@ export async function runGithubGuard({ github, owner, repo, workflowSha, appId, 
   const keyed = key => item => item?.[key];
   const repository = (await github.rest.repos.get({ ...common, request: deadline() })).data;
   if (!positive(repository.id) || repository.default_branch !== 'main' || repository.allow_auto_merge !== true || repository.allow_squash_merge !== true) fail();
-  const app = (await github.request('GET /apps/{app_slug}', { app_slug: appSlug, request: deadline() })).data;
-  if (app.id !== appId || app.slug !== appSlug) fail();
-  const appBot = (await github.rest.users.getByUsername({ username: `${appSlug}[bot]`, request: deadline() })).data;
   const controller = (await github.rest.users.getByUsername({ username: 'github-actions[bot]', request: deadline() })).data;
-  if (!positive(appBot.id) || typeof controller.node_id !== 'string' || !controller.node_id) fail();
+  if (typeof controller.node_id !== 'string' || !controller.node_id) fail();
   const openPrs = await list('GET /repos/{owner}/{repo}/pulls', { state: 'open' }, '/pulls', plain, keyed('id'));
   verifyOpenPrs(openPrs);
   const candidates = eligibleCandidates(openPrs, repository.id, protectedAfter, event, eventHead);
   if (candidates.length !== 1) return 'held: candidate count';
   const number = candidates[0].number;
+  // private Appを別のGITHUB_TOKENで照会せず、このApp自身のinstallation tokenで照合する。
+  async function readAppIdentity(path) {
+    try {
+      const response = await fetchImpl(`https://api.github.com${path}`, { method: 'GET',
+        headers: { authorization: `Bearer ${appToken}`, accept: 'application/vnd.github+json', 'x-github-api-version': '2026-03-10' },
+        redirect: 'error', signal: AbortSignal.timeout(10_000) });
+      if (!response.ok) fail();
+      return await response.json();
+    } catch { fail(); }
+  }
+  const app = await readAppIdentity(`/apps/${encodeURIComponent(appSlug)}`);
+  if (app?.id !== appId || app.client_id !== appClientId || app.slug !== expectedAppSlug) fail();
+  const bot = await readAppIdentity(`/users/${encodeURIComponent(`${appSlug}[bot]`)}`);
+  if (bot?.id !== appBotId || bot.login !== `${expectedAppSlug}[bot]` || bot.type !== 'Bot') fail();
   let nodeId;
 
   async function observe() {
@@ -248,6 +260,6 @@ export async function runGithubGuard({ github, owner, repo, workflowSha, appId, 
     return finalPull.state === 'closed' && finalPull.merged === true && finalPull.head?.sha === snapshot.head
       && finalPull.merge_commit_sha === merged.sha && finalMain === main;
   }
-  return guardCandidate({ observe, postStatus, reserve, verifyMerged, repo: `${owner}/${repo}`, appId, appBotId: appBot.id,
+  return guardCandidate({ observe, postStatus, reserve, verifyMerged, repo: `${owner}/${repo}`, appId, appBotId, appBotLogin: `${expectedAppSlug}[bot]`,
     controllerBotNodeId: controller.node_id, nonce: randomUUID(), runUrl: `https://github.com/${owner}/${repo}/actions/runs/${runId}/attempts/${runAttempt}` });
 }

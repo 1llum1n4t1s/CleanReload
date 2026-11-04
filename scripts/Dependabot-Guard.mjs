@@ -75,8 +75,9 @@ export function verifyHumanControl(timeline) {
 }
 
 // statusはHEADに紐付くため、PR・発行run・nonceの対応が不明なら再利用しない。
-export function inspectGuardHistory({ statuses, botId, repo, pr }) {
-  if (!Array.isArray(statuses) || !id(botId) || !id(pr) || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) hold('invalid history');
+export function inspectGuardHistory({ statuses, botId, botLogin, repo, pr }) {
+  if (!Array.isArray(statuses) || !id(botId) || typeof botLogin !== 'string' || !/^[a-z0-9-]+\[bot\]$/.test(botLogin)
+    || !id(pr) || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) hold('invalid history');
   if (statuses.some((status, index) => index > 0 && status.id >= statuses[index - 1].id)) hold('status order');
   const sorted = [...statuses].reverse();
   const seen = new Set();
@@ -84,6 +85,7 @@ export function inspectGuardHistory({ statuses, botId, repo, pr }) {
   let success = null;
   for (const status of sorted) {
     if (!id(status.id) || seen.has(status.id) || status.context !== guard || status.creator?.id !== botId
+      || status.creator?.login !== botLogin || status.creator?.type !== 'Bot'
       || !['pending', 'success'].includes(status.state)) hold('unknown status');
     seen.add(status.id);
     const match = /^guard-v1:([1-9]\d*):([0-9a-f-]+)$/.exec(status.description ?? '');
@@ -107,8 +109,9 @@ export function inspectGuardHistory({ statuses, botId, repo, pr }) {
 
 // observeは全ページ・rules・CI run/attemptの読取りと独立監査済みbypass前提を確認する。
 // いずれかの通信結果が不明なら呼出しを止め、後続の外部書込みを行わない。
-export async function guardCandidate({ observe, postStatus, reserve, verifyMerged, repo, appId, appBotId, controllerBotNodeId, nonce, runUrl }) {
-  if (!uuid.test(nonce) || !id(appId) || !id(appBotId) || typeof controllerBotNodeId !== 'string' || !controllerBotNodeId) hold('invalid configuration');
+export async function guardCandidate({ observe, postStatus, reserve, verifyMerged, repo, appId, appBotId, appBotLogin, controllerBotNodeId, nonce, runUrl }) {
+  if (!uuid.test(nonce) || !id(appId) || !id(appBotId) || typeof appBotLogin !== 'string' || !/^[a-z0-9-]+\[bot\]$/.test(appBotLogin)
+    || typeof controllerBotNodeId !== 'string' || !controllerBotNodeId) hold('invalid configuration');
   const runPrefix = `https://github.com/${repo}/actions/runs/`;
   if (typeof runUrl !== 'string' || !runUrl.startsWith(runPrefix)
     || !/^[1-9]\d*\/attempts\/[1-9]\d*$/.test(runUrl.slice(runPrefix.length))) hold('invalid run');
@@ -120,7 +123,7 @@ export async function guardCandidate({ observe, postStatus, reserve, verifyMerge
     verifyEffectiveRules(data.rules, appId);
     verifyHumanControl(data.timeline);
     const evidence = verifyMergeEvidence(data.evidence);
-    const history = inspectGuardHistory({ statuses: data.guardStatuses, botId: appBotId, repo, pr: evidence.pr });
+    const history = inspectGuardHistory({ statuses: data.guardStatuses, botId: appBotId, botLogin: appBotLogin, repo, pr: evidence.pr });
     if (data.auto && (data.auto.actorId !== controllerBotNodeId || data.auto.method !== 'SQUASH')) hold('unowned reservation');
     return { evidence, history, auto: data.auto, mergeState: data.mergeState };
   }

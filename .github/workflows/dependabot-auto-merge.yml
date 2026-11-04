@@ -20,6 +20,7 @@ concurrency:
 jobs:
   auto-merge:
     # App鍵はこのcontroller専用。owner以外のwrite主体や別の自動merge経路を許さないこと。
+    # ownerはApp ID・client ID・slug・bot IDとrule sourceの対応を有効化前に監査する。
     # statusはSHA単位で共有されるため、各repoの共有HEAD・merge経路も有効化前に監査する。
     # ownerはDependabot branch作成からbotのPR openedまでbranchを書換えないこと。
     # 保護の反映をownerが監査してから保護確認時刻を設定する。GitHub時刻だけで即時反映は証明できない。
@@ -43,7 +44,7 @@ jobs:
         env:
           EVENT_HEAD: ${{ github.event.workflow_run.head_sha || '' }}
           BRANCH_PROTECTED_AFTER: ${{ vars.DEPENDABOT_BRANCH_PROTECTED_AFTER }}
-          CONFIGURED: ${{ vars.DEPENDENCY_GUARD_APP_CLIENT_ID != '' && vars.DEPENDENCY_GUARD_APP_ID != '' && vars.DEPENDENCY_GUARD_RULESET_ID != '' && vars.DEPENDENCY_GUARD_RULESET_UPDATED_AT != '' && vars.DEPENDABOT_BRANCH_RULESET_ID != '' && vars.DEPENDABOT_BRANCH_RULESET_UPDATED_AT != '' && vars.DEPENDABOT_BRANCH_PROTECTED_AFTER != '' && secrets.DEPENDENCY_GUARD_PRIVATE_KEY != '' }}
+          CONFIGURED: ${{ vars.DEPENDENCY_GUARD_APP_CLIENT_ID != '' && vars.DEPENDENCY_GUARD_APP_ID != '' && vars.DEPENDENCY_GUARD_APP_SLUG != '' && vars.DEPENDENCY_GUARD_APP_BOT_ID != '' && vars.DEPENDENCY_GUARD_RULESET_ID != '' && vars.DEPENDENCY_GUARD_RULESET_UPDATED_AT != '' && vars.DEPENDABOT_BRANCH_RULESET_ID != '' && vars.DEPENDABOT_BRANCH_RULESET_UPDATED_AT != '' && vars.DEPENDABOT_BRANCH_PROTECTED_AFTER != '' && secrets.DEPENDENCY_GUARD_PRIVATE_KEY != '' }}
         with:
           script: |
             const { pathToFileURL } = require('node:url');
@@ -75,6 +76,9 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GUARD_APP_ID: ${{ vars.DEPENDENCY_GUARD_APP_ID }}
+          GUARD_APP_CLIENT_ID: ${{ vars.DEPENDENCY_GUARD_APP_CLIENT_ID }}
+          EXPECTED_GUARD_APP_SLUG: ${{ vars.DEPENDENCY_GUARD_APP_SLUG }}
+          GUARD_APP_BOT_ID: ${{ vars.DEPENDENCY_GUARD_APP_BOT_ID }}
           GUARD_RULESET_ID: ${{ vars.DEPENDENCY_GUARD_RULESET_ID }}
           GUARD_RULESET_UPDATED_AT: ${{ vars.DEPENDENCY_GUARD_RULESET_UPDATED_AT }}
           BRANCH_RULESET_ID: ${{ vars.DEPENDABOT_BRANCH_RULESET_ID }}
@@ -91,7 +95,8 @@ jobs:
             const result = await runGithubGuard({
               github, owner: context.repo.owner, repo: context.repo.repo,
               workflowSha: context.sha, event: context.eventName, eventHead: process.env.EVENT_HEAD,
-              appId: Number(process.env.GUARD_APP_ID), appSlug: process.env.GUARD_APP_SLUG,
+              appId: Number(process.env.GUARD_APP_ID), appClientId: process.env.GUARD_APP_CLIENT_ID, appSlug: process.env.GUARD_APP_SLUG,
+              expectedAppSlug: process.env.EXPECTED_GUARD_APP_SLUG, appBotId: Number(process.env.GUARD_APP_BOT_ID),
               appToken: process.env.GUARD_APP_TOKEN, rulesetId: Number(process.env.GUARD_RULESET_ID),
               rulesetUpdatedAt: process.env.GUARD_RULESET_UPDATED_AT,
               branchRulesetId: Number(process.env.BRANCH_RULESET_ID), branchRulesetUpdatedAt: process.env.BRANCH_RULESET_UPDATED_AT,
