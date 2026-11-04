@@ -41,6 +41,11 @@ jobs:
           persist-credentials: false
           ref: ${{ inputs.mode == 'bun-security' && format('refs/pull/{0}/merge', inputs.pr) || (github.sha) }}
           fetch-depth: 2
+      - name: validated-pr ${{ github.event.pull_request.number }} action ${{ github.event.action }} sender ${{ github.event.sender.id }} head ${{ github.event.pull_request.head.sha }} merge ${{ github.sha }}
+        if: github.event_name == 'pull_request'
+        env:
+          EXPECTED_MERGE: ${{ github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_MERGE"
       - name: Verify security merge commit and parents
         if: inputs.mode == 'bun-security'
         shell: bash
