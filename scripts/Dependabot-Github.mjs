@@ -213,7 +213,7 @@ export async function runGithubGuard({ github, owner, repo, workflowSha, appId, 
           || items.some(item => item.check_suite?.id !== suite.id)) fail();
         suiteRuns.push(...items);
       }
-      const signature = item => JSON.stringify([item.id, item.name, item.status, item.conclusion, item.app?.id, item.check_suite?.id]);
+      const signature = item => JSON.stringify([item.id, item.name, item.status, item.conclusion, item.app?.id, item.app?.slug, item.check_suite?.id, item.head_sha]);
       if (checks.length !== suiteRuns.length || new Set(suiteRuns.map(item => item.id)).size !== suiteRuns.length
         || checks.map(signature).sort().join('\n') !== suiteRuns.map(signature).sort().join('\n')) fail();
       const after = await readSuites(ref);
@@ -224,15 +224,32 @@ export async function runGithubGuard({ github, owner, repo, workflowSha, appId, 
     const headResult = await readCheckedRuns(head);
     const mergeStatuses = await readStatuses(mergeRef);
     const mergeResult = await readCheckedRuns(mergeRef);
+    const skippedCodeRabbit = headResult.checks.filter(check => check.app?.id === 347564 || check.name === 'CodeRabbit');
+    if (skippedCodeRabbit.length > 1) fail();
+    const skippedHeadCheckIds = [];
+    const skippedSuiteIds = new Set();
+    for (const check of skippedCodeRabbit) {
+      const suite = headResult.suites.find(item => item.id === check.check_suite?.id);
+      if (check.app?.id !== 347564 || check.app.slug !== 'coderabbitai' || check.name !== 'CodeRabbit'
+        || check.status !== 'completed' || check.conclusion !== 'skipped' || check.head_sha !== head
+        || !positive(check.id) || !suite || suite.app?.id !== 347564 || suite.app.slug !== 'coderabbitai'
+        || suite.status !== 'completed' || suite.conclusion !== 'skipped' || suite.head_sha !== head
+        || headResult.checks.filter(item => item.check_suite?.id === suite.id).length !== 1
+        || mergeResult.checks.some(item => item.id === check.id) || mergeResult.suites.some(item => item.id === suite.id)) fail();
+      skippedHeadCheckIds.push(check.id);
+      skippedSuiteIds.add(suite.id);
+    }
     const checks = [...headResult.checks, ...mergeResult.checks];
     const suites = [...headResult.suites, ...mergeResult.suites];
-    const supersededCheckIds = await classifySupersededChecks({ checks, suites, run, jobs, repositoryId: repository.id, workflowId: workflow.id, pr, head, merge: mergeRef,
+    const supersededCheckIds = await classifySupersededChecks({ checks: checks.filter(check => !skippedHeadCheckIds.includes(check.id)),
+      suites: suites.filter(suite => !skippedSuiteIds.has(suite.id)), run, jobs, repositoryId: repository.id, workflowId: workflow.id, pr, head, merge: mergeRef,
       loadJob: async jobId => (await github.request('GET /repos/{owner}/{repo}/actions/jobs/{job_id}', { ...common, job_id: jobId, request: deadline() })).data,
       loadRun: async (runId, attempt) => (await github.request('GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}', { ...common, run_id: runId, attempt_number: attempt, request: deadline() })).data,
       loadJobs: (runId, attempt) => list('GET /repos/{owner}/{repo}/actions/runs/{run_id}/attempts/{attempt_number}/jobs', { run_id: runId, attempt_number: attempt }, `/actions/runs/${runId}/attempts/${attempt}/jobs`, data => ({ items: data.jobs, count: data.total_count }), keyed('id')) });
     for (const suite of suites) {
       const related = checks.filter(check => check.check_suite?.id === suite.id);
       if (!related.length) continue; // 全ページで空と確認したqueued suite。
+      if (skippedSuiteIds.has(suite.id) && related.length === 1 && skippedHeadCheckIds.includes(related[0].id)) continue;
       if (suite.conclusion === 'success') continue;
       if (['failure', 'cancelled'].includes(suite.conclusion) && related.every(check => supersededCheckIds.includes(check.id))) continue;
       if (suite.conclusion === 'skipped' && related.every(check => check.name === 'security-result' && check.conclusion === 'skipped')) continue;
@@ -241,7 +258,7 @@ export async function runGithubGuard({ github, owner, repo, workflowSha, appId, 
     const guardStatuses = headStatuses.filter(status => typeof status.context === 'string' && status.context.toLowerCase() === guard);
     const evidence = { repository: currentRepo, pr, base, headCommit, mergeCommit, compare, commits, files, packageFiles, protectedAfter,
       headStatuses: headStatuses.filter(status => !guardStatuses.includes(status)), headChecks: headResult.checks, mergeStatuses, mergeChecks: mergeResult.checks,
-      approvedHeadCheckIds: jobs.map(job => job.id), supersededCheckIds, run, jobs, workflowId: workflow.id };
+      approvedHeadCheckIds: jobs.map(job => job.id), skippedHeadCheckIds, supersededCheckIds, run, jobs, workflowId: workflow.id };
     return { evidence, rules, bypassAudited: true, sameHeadOpenPrs, reviewDecision: graph.reviewDecision,
       mergeState: graph.mergeStateStatus, auto: graph.autoMergeRequest ? { actorId: graph.autoMergeRequest.enabledBy?.id, method: graph.autoMergeRequest.mergeMethod } : null, timeline, guardStatuses };
   }

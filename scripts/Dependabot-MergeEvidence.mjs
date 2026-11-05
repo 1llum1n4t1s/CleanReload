@@ -38,7 +38,7 @@ export function verifyPackageJson(before, after) {
 }
 
 // API呼出し元は全ページを取得し、ページ境界・tipの変化を別途確認する。
-export function verifyMergeEvidence({ repository, pr, base, headCommit, mergeCommit, compare, commits, files, packageFiles, headStatuses, headChecks, mergeStatuses, mergeChecks, run, jobs, workflowId, protectedAfter, approvedHeadStatusIds = [], approvedHeadCheckIds = [], supersededCheckIds = [] }) {
+export function verifyMergeEvidence({ repository, pr, base, headCommit, mergeCommit, compare, commits, files, packageFiles, headStatuses, headChecks, mergeStatuses, mergeChecks, run, jobs, workflowId, protectedAfter, approvedHeadStatusIds = [], approvedHeadCheckIds = [], skippedHeadCheckIds = [], supersededCheckIds = [] }) {
   if (!repository || !validId(repository.id) || !pr || !validId(pr.number) || pr.state !== 'open' || pr.draft !== false
     || pr.user?.id !== botId || pr.user?.login !== 'dependabot[bot]' || pr.user?.type !== 'Bot'
     || pr.head?.repo?.id !== repository.id || pr.base?.repo?.id !== repository.id
@@ -65,18 +65,26 @@ export function verifyMergeEvidence({ repository, pr, base, headCommit, mergeCom
     || files.some(file => typeof file.filename !== 'string' || !file.filename || !dependencyFile(file))) fail();
   if (files.some(file => file.filename === 'package.json')) verifyPackageJson(packageFiles?.base, packageFiles?.head);
   if (!Array.isArray(headStatuses) || !Array.isArray(headChecks) || !Array.isArray(mergeStatuses) || !Array.isArray(mergeChecks)
-    || !Array.isArray(approvedHeadStatusIds) || !Array.isArray(approvedHeadCheckIds) || !Array.isArray(supersededCheckIds)
+    || !Array.isArray(approvedHeadStatusIds) || !Array.isArray(approvedHeadCheckIds) || !Array.isArray(skippedHeadCheckIds) || !Array.isArray(supersededCheckIds)
+    || skippedHeadCheckIds.length > 1 || skippedHeadCheckIds.some(id => !validId(id)
+      || approvedHeadCheckIds.includes(id) || supersededCheckIds.includes(id) || !headChecks.some(check => check.id === id))
     || mergeStatuses.length !== 0
     || headStatuses.some(status => typeof status.context !== 'string' || status.context.toLowerCase() === guard
       || !validId(status.id) || !approvedHeadStatusIds.includes(status.id))
-    || [...headChecks, ...mergeChecks].some(check => typeof check.name !== 'string' || check.name.toLowerCase() === guard
-      || !validId(check.id) || (!approvedHeadCheckIds.includes(check.id) && !supersededCheckIds.includes(check.id))
+    || [...headChecks, ...mergeChecks].some(check => {
+      const skippedCodeRabbit = headChecks.includes(check) && skippedHeadCheckIds.includes(check.id)
+        && check.app?.id === 347564 && check.app.slug === 'coderabbitai'
+        && check.name === 'CodeRabbit' && check.head_sha === pr?.head?.sha && check.conclusion === 'skipped';
+      return typeof check.name !== 'string' || check.name.toLowerCase() === guard
+      || !validId(check.id) || (!approvedHeadCheckIds.includes(check.id) && !supersededCheckIds.includes(check.id) && !skippedCodeRabbit)
       || check.status !== 'completed' || (check.conclusion !== 'success'
         && !supersededCheckIds.includes(check.id)
+        && !skippedCodeRabbit
         && !(check.name === 'security-result' && check.conclusion === 'skipped'
           && Array.isArray(jobs) && jobs.some(job => job.id === check.id && job.name === 'security-result'
             && job.run_id === run?.id && job.run_attempt === run?.run_attempt
-            && job.status === 'completed' && job.conclusion === 'skipped'))))) fail();
+            && job.status === 'completed' && job.conclusion === 'skipped')));
+    })) fail();
   if (!validId(workflowId) || !run || run.workflow_id !== workflowId || !validId(run.id) || !validId(run.run_attempt)
     || run.status !== 'completed' || run.conclusion !== 'success' || run.head_repository?.id !== repository.id
     || run.event !== 'pull_request' || run.head_sha !== head || !Number.isFinite(Date.parse(run.created_at))

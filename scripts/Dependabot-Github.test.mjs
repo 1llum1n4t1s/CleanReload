@@ -94,10 +94,62 @@ function fixture() {
   return { state, args, rules };
 }
 
+function addSkippedCodeRabbit(state) {
+  const head = sha('b');
+  const check = { id: 92, name: 'CodeRabbit', status: 'completed', conclusion: 'skipped', head_sha: head,
+    app: { id: 347564, slug: 'coderabbitai' }, check_suite: { id: 91 } };
+  const suite = { id: 91, status: 'completed', conclusion: 'skipped', head_sha: head, app: { id: 347564, slug: 'coderabbitai' } };
+  state.checks[head] = [check];
+  state.suites[head] = [suite];
+  state.suiteRuns[91] = [check];
+  return { check, suite };
+}
+
 test('trusted controller は全証拠を再読してHEADにpending、予約、successを順に行う', async () => {
   const { state, args } = fixture();
   assert.equal(await runGithubGuard(args), 'enabled');
   assert.deepEqual(state.writes, ['pending', 'reserve', 'success']);
+});
+
+test('既知のCodeRabbit skippedはCI成功に数えずhead上だけ許可する', async () => {
+  const { state, args } = fixture();
+  addSkippedCodeRabbit(state);
+  const head = sha('b');
+  const actions = { id: 15368, slug: 'github-actions' };
+  const ciChecks = ['security-guard', 'validate'].map((name, index) => ({
+    id: 21 + index, name, status: 'completed', conclusion: 'success', head_sha: head,
+    app: actions, check_suite: { id: 90 },
+  }));
+  state.checks[head].push(...ciChecks);
+  state.suites[head].push({ id: 90, status: 'completed', conclusion: 'success', head_sha: head, app: actions });
+  state.suiteRuns[90] = ciChecks;
+  assert.equal(await runGithubGuard(args), 'enabled');
+  assert.deepEqual(state.writes, ['pending', 'reserve', 'success']);
+});
+
+test('CodeRabbitの出所・状態・suiteが異なれば書込み前に保留する', async () => {
+  for (const change of [
+    ({ check }) => { check.app.id = 1; },
+    ({ check }) => { check.app.slug = 'other'; },
+    ({ check }) => { check.name = 'Other'; },
+    ({ check }) => { check.status = 'in_progress'; },
+    ({ check }) => { check.conclusion = 'success'; },
+    ({ check }) => { check.conclusion = 'failure'; },
+    ({ check }) => { check.head_sha = sha('f'); },
+    ({ check }) => { check.check_suite.id = 999; },
+    ({ suite }) => { suite.app.id = 1; },
+    ({ suite }) => { suite.app.slug = 'other'; },
+    ({ suite }) => { suite.status = 'queued'; },
+    ({ suite }) => { suite.conclusion = 'success'; },
+    ({ suite }) => { suite.head_sha = sha('f'); },
+    ({ check, state }) => { const extra = { ...check, id: 93, name: 'Other' }; state.checks[sha('b')].push(extra); state.suiteRuns[91].push(extra); },
+  ]) {
+    const { state, args } = fixture();
+    const values = addSkippedCodeRabbit(state);
+    change({ ...values, state });
+    await assert.rejects(runGithubGuard(args));
+    assert.deepEqual(state.writes, []);
+  }
 });
 
 test('ルール更新時刻は同じ瞬間なら異なるタイムゾーン表記を受け入れる', async () => {

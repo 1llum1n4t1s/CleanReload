@@ -22,6 +22,31 @@ const fixture = () => {
   };
 };
 
+test('CodeRabbitのskippedはheadの専用IDと出所が一致する場合だけ許可する', () => {
+  const valid = fixture();
+  valid.headChecks = [{ id: 92, name: 'CodeRabbit', status: 'completed', conclusion: 'skipped', head_sha: sha('b'),
+    app: { id: 347564, slug: 'coderabbitai' } }];
+  valid.skippedHeadCheckIds = [92];
+  assert.equal(verifyMergeEvidence(valid).pr, 7);
+  for (const change of [
+    x => { x.headChecks[0].app.id = 1; },
+    x => { x.headChecks[0].app.slug = 'other'; },
+    x => { x.headChecks[0].name = 'Other'; },
+    x => { x.headChecks[0].status = 'queued'; },
+    x => { x.headChecks[0].conclusion = 'failure'; },
+    x => { x.headChecks[0].head_sha = sha('f'); },
+    x => { x.skippedHeadCheckIds = [93]; },
+    x => { x.approvedHeadCheckIds = [92]; },
+    x => { x.mergeChecks = x.headChecks; x.headChecks = []; },
+  ]) {
+    const data = fixture();
+    data.headChecks = structuredClone(valid.headChecks);
+    data.skippedHeadCheckIds = [92];
+    change(data);
+    assert.throws(() => verifyMergeEvidence(data));
+  }
+});
+
 test('検証済みマージコミットと全jobが同じrunとattemptに属する', () => {
   assert.deepEqual(verifyMergeEvidence(fixture()), { pr: 7, base: sha('a'), head: sha('b'), merge: sha('c'), tree: sha('d'), run: 11, attempt: 1 });
   const opened = fixture();
