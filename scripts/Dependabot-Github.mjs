@@ -8,6 +8,20 @@ const fail = () => { throw new Error('Dependabot GitHub evidence unavailable'); 
 const positive = value => Number.isSafeInteger(value) && value > 0;
 const deadline = () => ({ timeout: 10_000, signal: AbortSignal.timeout(10_000) });
 
+function rulesetTime(value) {
+  if (typeof value !== 'string') return null;
+  const match = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):([0-5]\d):([0-5]\d)(?:\.(\d{1,3}))?(Z|([+-])(0\d|1[0-4]):([0-5]\d))$/.exec(value);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (year === 0 || day > days[month - 1] || (Number(match[10]) === 14 && Number(match[11]) !== 0)) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function verifyOpenPrs(prs) {
   if (!Array.isArray(prs) || new Set(prs.map(pr => pr?.number)).size !== prs.length
     || prs.some(pr => !positive(pr?.id) || !positive(pr.number) || pr.state !== 'open' || typeof pr.draft !== 'boolean'
@@ -84,9 +98,8 @@ export async function runGithubGuard({ github, owner, repo, workflowSha, appId, 
     || !positive(appId) || !positive(rulesetId) || !positive(branchRulesetId) || branchRulesetId === rulesetId || !positive(runId) || !positive(runAttempt)
     || typeof appClientId !== 'string' || !appClientId || typeof appSlug !== 'string' || !/^[a-z0-9-]+$/.test(appSlug) || appSlug !== expectedAppSlug
     || !positive(appBotId) || typeof appToken !== 'string' || !appToken
-    || typeof rulesetUpdatedAt !== 'string' || typeof branchRulesetUpdatedAt !== 'string'
-    || !Number.isFinite(Date.parse(branchRulesetUpdatedAt)) || !Number.isFinite(Date.parse(protectedAfter))
-    || Date.parse(branchRulesetUpdatedAt) >= Date.parse(protectedAfter) || !['workflow_run', 'workflow_dispatch'].includes(event)) fail();
+    || rulesetTime(rulesetUpdatedAt) === null || rulesetTime(branchRulesetUpdatedAt) === null || rulesetTime(protectedAfter) === null
+    || rulesetTime(branchRulesetUpdatedAt) >= rulesetTime(protectedAfter) || !['workflow_run', 'workflow_dispatch'].includes(event)) fail();
   const common = { owner, repo };
   const prefix = `/repos/${owner}/${repo}`;
   const list = (route, params, suffix, extract, key) => pages(github, route, { ...common, ...params }, `${prefix}${suffix}`, repository.id, extract, key);
@@ -135,13 +148,13 @@ export async function runGithubGuard({ github, owner, repo, workflowSha, appId, 
     const rule = (await github.request('GET /repos/{owner}/{repo}/rulesets/{ruleset_id}', { ...common, ruleset_id: rulesetId, request: deadline() })).data;
     if (rule.id !== rulesetId || rule.enforcement !== 'active' || rule.target !== 'branch'
       || rule.source_type !== 'Repository' || rule.source?.toLowerCase() !== `${owner}/${repo}`.toLowerCase()
-      || rule.updated_at !== rulesetUpdatedAt) fail();
+      || rulesetTime(rule.updated_at) === null || rulesetTime(rule.updated_at) !== rulesetTime(rulesetUpdatedAt)) fail();
     const branchRules = await list('GET /repos/{owner}/{repo}/rules/branches/{branch}', { branch: pr.head.ref }, `/rules/branches/${encodeURIComponent(pr.head.ref)}`, plain, item => `${item.ruleset_id}:${item.type}`);
     verifyDependabotBranchRules(branchRules, branchRulesetId);
     const branchRule = (await github.request('GET /repos/{owner}/{repo}/rulesets/{ruleset_id}', { ...common, ruleset_id: branchRulesetId, request: deadline() })).data;
     if (branchRule.id !== branchRulesetId || branchRule.enforcement !== 'active' || branchRule.target !== 'branch'
       || branchRule.source_type !== 'Repository' || branchRule.source?.toLowerCase() !== `${owner}/${repo}`.toLowerCase()
-      || branchRule.updated_at !== branchRulesetUpdatedAt) fail();
+      || rulesetTime(branchRule.updated_at) === null || rulesetTime(branchRule.updated_at) !== rulesetTime(branchRulesetUpdatedAt)) fail();
     const graph = (await github.graphql(pullQuery, { ...common, number, request: deadline() })).repository?.pullRequest;
     if (!graph || graph.number !== number || graph.state !== 'OPEN' || graph.isDraft !== false || graph.headRefOid !== head) fail();
     nodeId = graph.id;

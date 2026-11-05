@@ -48,7 +48,7 @@ function fixture() {
       switch (route) {
         case 'GET /repos/{owner}/{repo}/pulls': data = state.prs; break;
         case 'GET /repos/{owner}/{repo}/rules/branches/{branch}': data = params.branch === 'main' ? rules : [{ ruleset_id: 51, type: 'creation' }, { ruleset_id: 51, type: 'update' }]; break;
-        case 'GET /repos/{owner}/{repo}/rulesets/{ruleset_id}': data = { id: params.ruleset_id, enforcement: 'active', target: 'branch', source_type: 'Repository', source: '1llum1n4t1s/CleanReload', updated_at: '2026-01-01T00:00:00Z' }; break;
+        case 'GET /repos/{owner}/{repo}/rulesets/{ruleset_id}': data = { id: params.ruleset_id, enforcement: 'active', target: 'branch', source_type: 'Repository', source: '1llum1n4t1s/CleanReload', updated_at: state.ruleTimes?.[params.ruleset_id] ?? '2026-01-01T00:00:00Z' }; break;
         case 'GET /repos/{owner}/{repo}/pulls/{pull_number}/commits': data = [{ sha: sha('b'), author: bot, committer: { id: 19864447, login: 'web-flow' }, commit: { verification: { verified: true, reason: 'valid', signature: 'signature', payload: 'payload' } } }]; break;
         case 'GET /repos/{owner}/{repo}/pulls/{pull_number}/files': data = state.files; break;
         case 'GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs': data = { total_count: 1, workflow_runs: [run] }; break;
@@ -98,6 +98,36 @@ test('trusted controller は全証拠を再読してHEADにpending、予約、su
   const { state, args } = fixture();
   assert.equal(await runGithubGuard(args), 'enabled');
   assert.deepEqual(state.writes, ['pending', 'reserve', 'success']);
+});
+
+test('ルール更新時刻は同じ瞬間なら異なるタイムゾーン表記を受け入れる', async () => {
+  for (const [pin, api] of [
+    ['2026-01-01T09:00:00+09:00', '2026-01-01T00:00:00Z'],
+    ['2026-01-01T09:00:00.1+09:00', '2026-01-01T00:00:00.100Z'],
+    ['2026-01-01T09:00:00.10+09:00', '2026-01-01T00:00:00.100Z'],
+  ]) {
+    const { state, args } = fixture();
+    args.rulesetUpdatedAt = pin;
+    args.branchRulesetUpdatedAt = pin;
+    state.ruleTimes = { 50: api, 51: api };
+    assert.equal(await runGithubGuard(args), 'enabled');
+    assert.deepEqual(state.writes, ['pending', 'reserve', 'success']);
+  }
+});
+
+test('不正な日付やミリ秒未満の差を同一時刻とみなさない', async () => {
+  for (const change of [
+    x => { x.args.rulesetUpdatedAt = '2026-02-30T00:00:00Z'; x.state.ruleTimes = { 50: '2026-03-02T00:00:00Z' }; },
+    x => { x.args.rulesetUpdatedAt = '2026-01-01T00:00:00.0001Z'; x.state.ruleTimes = { 50: '2026-01-01T00:00:00.0009Z' }; },
+    x => { x.args.branchRulesetUpdatedAt = '2025-01-01T00:00:00.0001Z'; x.state.ruleTimes = { 51: '2025-01-01T00:00:00.0009Z' }; },
+    x => { x.args.branchRulesetUpdatedAt = '2025-02-30T00:00:00Z'; x.state.ruleTimes = { 51: '2025-03-02T00:00:00Z' }; },
+    x => { x.args.branchRulesetUpdatedAt = '2026-01-01T14:30:00+14:30'; x.state.ruleTimes = { 51: '2026-01-01T00:00:00Z' }; },
+    x => { x.args.protectedAfter = '2026-02-30T00:00:00Z'; },
+  ]) {
+    const data = fixture(); change(data);
+    await assert.rejects(runGithubGuard(data.args));
+    assert.deepEqual(data.state.writes, []);
+  }
 });
 
 test('success直後のmerge完了はcommit親・tree・main祖先まで一致した場合だけ確定する', async () => {
