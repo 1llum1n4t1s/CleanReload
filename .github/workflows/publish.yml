@@ -20,7 +20,7 @@ concurrency:
 jobs:
   publish:
     name: Chrome Web Store 公開
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, ARM64, m3mb14]
     env:
       # CI では scripts/generate-icons.js（sharp）しか実行しないので puppeteer の Chromium (~200MB) は不要
       PUPPETEER_SKIP_DOWNLOAD: '1'
@@ -104,7 +104,7 @@ jobs:
 
   publish-firefox:
     name: Firefox AMO に submission
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, ARM64, m3mb14]
     # Chrome publish が失敗（同 version 重複 upload 等）しても Firefox AMO は独立して submit する。
     # cancelled() のときだけ skip。
     if: ${{ success() || failure() }}
