@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "__MSG_appName__",
   "description": "__MSG_appDescriptionFirefox__",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "browser_specific_settings": {
     "gecko": {
       "id": "{a4a7df25-9281-44f6-9d06-5959599c6473}",

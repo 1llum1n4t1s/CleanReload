@@ -1,0 +1,59 @@
+A Chrome extension that, with one click, removes the cache for the page you are viewing and then reloads it.
+It also removes the Service Worker registrations and CacheStorage that a normal hard reload (Ctrl+Shift+R) leaves behind,
+so in web development and debugging you can skip stale cached files and check the latest state.
+
+■ Main features
+
+・One-click deep clean reload
+  Click the toolbar icon to do the following for the page you are viewing:
+  1. Remove the Service Worker registrations and CacheStorage of the page's origin
+  2. Start clearing the HTTP cache of the same origin
+  3. Reload the page, bypassing the cache
+  The page is reloaded even if clearing the cache fails.
+
+・Clean reload all tabs at once
+  Right-click the toolbar icon → "Clean reload all tabs" to clear the cache of each origin and then reload
+  every open tab (except the unsupported pages listed below).
+
+・Force all background tabs to sleep
+  Right-click the toolbar icon → "Force all background tabs to sleep" to release tabs you are not viewing from memory.
+  Tabs are not closed; they reload automatically the next time you select them.
+  The tab being viewed in each window is excluded.
+
+・Open the DNS cache clearing page
+  Right-click the toolbar icon → "Open the DNS cache clearing page" to open the browser's DNS cache
+  page in a new tab. Press "Clear host cache" on that page to clear it.
+  A normal clean reload does not clear the DNS cache.
+
+・No data collection, no external communication
+  No browsing data is collected or sent anywhere. There is no settings screen, so you can use it right after installing.
+
+■ Scope of clearing and unsupported pages
+
+・The cache is cleared per origin (the combination of protocol, host, and port).
+  The cache of other pages on the same origin is cleared as well.
+・Data other than the cache, such as cookies, login state, browsing history, and passwords, is not deleted.
+・Browser-internal pages, such as the browser's settings page and extension pages, are not supported by clean reload.
+・For local HTML files (file:), the cache is not cleared; the page is only reloaded with the cache bypassed.
+・The "✓" shown on the icon when you click is a marker that processing has started; it does not indicate that clearing succeeded.
+
+■ Recommended for
+
+・Web developers: when CSS / JavaScript changes do not show up because of the cache
+・Checking PWAs: when an old Service Worker or cache remains and the latest version does not appear
+・Everyone: to refresh a page that looks wrong
+
+■ How to use
+
+1. On the page you want to reload, click the toolbar icon.
+2. To process all tabs at once, right-click the icon and choose "Clean reload all tabs".
+3. To release the memory of tabs you are not viewing, right-click the icon and choose
+   "Force all background tabs to sleep".
+
+■ About permissions
+
+・activeTab: Used to get the URL of the tab you are viewing when you click.
+・browsingData: Used to remove Service Worker registrations, CacheStorage, and the HTTP cache.
+・contextMenus: Used to add "Clean reload all tabs", "Force all background tabs to sleep", and
+  "Open the DNS cache clearing page" to the icon's right-click menu.
+・tabs: Used to get the URLs of all tabs, clear their cache, and then reload them or release their memory.

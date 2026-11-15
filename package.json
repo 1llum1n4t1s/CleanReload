@@ -1,6 +1,6 @@
 {
   "name": "clean-reload",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "type": "commonjs",
   "packageManager": "bun@1.4.4",
   "description": "ワンクリックで Service Worker と HTTP キャッシュをクリアし、Chrome では CacheStorage も削除して再読み込みする拡張機能",

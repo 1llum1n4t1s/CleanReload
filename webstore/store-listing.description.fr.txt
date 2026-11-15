@@ -1,0 +1,59 @@
+Extension Chrome qui, en un seul clic, supprime le cache de la page que vous consultez, puis la recharge.
+Elle supprime également les enregistrements Service Worker et le CacheStorage qu’un rechargement forcé classique (Ctrl+Maj+R) laisse en place,
+ce qui vous permet, lors du développement et du débogage web, d’éviter les anciens fichiers en cache et de vérifier l’état le plus récent.
+
+■ Fonctions principales
+
+・Rechargement propre en profondeur en un clic
+  Lorsque vous cliquez sur l’icône de la barre d’outils, les opérations suivantes sont effectuées pour la page consultée 
+  1. Suppression des enregistrements Service Worker et du CacheStorage de l’origine de la page
+  2. Lancement de la suppression du cache HTTP de la même origine
+  3. Rechargement de la page en contournant le cache
+  La page est rechargée même si la suppression du cache échoue.
+
+・Rechargement propre de tous les onglets à la fois
+  Faites un clic droit sur l’icône de la barre d’outils → « Rechargement propre de tous les onglets  pour supprimer le cache de chaque origine,
+  puis recharger tous les onglets ouverts (hors pages non prises en charge indiquées ci-dessous).
+
+・Mettre en veille tous les onglets en arrière-plan
+  Faites un clic droit sur l’icône de la barre d’outils → « Mettre en veille tous les onglets en arrière-plan  pour libérer de la mémoire
+  les onglets que vous ne consultez pas. Les onglets ne sont pas fermés  ils se rechargent automatiquement la prochaine fois que vous les sélectionnez.
+  L’onglet affiché dans chaque fenêtre est exclu.
+
+・Ouvrir la page de suppression du cache DNS
+  Faites un clic droit sur l’icône de la barre d’outils → « Ouvrir la page de suppression du cache DNS  pour ouvrir dans un nouvel onglet
+  la page du cache DNS du navigateur. Cliquez sur « Clear host cache  sur cette page pour le supprimer.
+  Un rechargement propre classique ne supprime pas le cache DNS.
+
+・Aucune collecte de données, aucune communication externe
+  Aucune donnée de navigation n’est collectée ni envoyée à l’extérieur. Il n’y a pas d’écran de paramètres  vous pouvez l’utiliser dès l’installation.
+
+■ Portée de la suppression et pages non prises en charge
+
+・Le cache est supprimé par origine (combinaison de protocole, d’hôte et de port).
+  Le cache des autres pages de la même origine est également supprimé.
+・Les données autres que le cache, comme les cookies, l’état de connexion, l’historique de navigation et les mots de passe, ne sont pas supprimées.
+・Les pages internes du navigateur, comme la page des paramètres et celles des extensions, ne sont pas prises en charge par le rechargement propre.
+・Pour les fichiers HTML locaux (file:), le cache n’est pas supprimé  la page est seulement rechargée en contournant le cache.
+・La coche « ✓  affichée sur l’icône lors du clic indique que le traitement a démarré, et non que la suppression a réussi.
+
+■ Recommandée pour
+
+・Développeurs web  lorsque les modifications CSS / JavaScript ne s’affichent pas à cause du cache
+・Vérification de PWA  lorsqu’un ancien Service Worker ou cache subsiste et que la dernière version ne s’affiche pas
+・Tout le monde  pour actualiser une page qui s’affiche mal
+
+■ Utilisation
+
+1. Sur la page que vous souhaitez recharger, cliquez sur l’icône de la barre d’outils.
+2. Pour traiter tous les onglets à la fois, faites un clic droit sur l’icône et choisissez « Rechargement propre de tous les onglets .
+3. Pour libérer la mémoire des onglets que vous ne consultez pas, faites un clic droit sur l’icône et choisissez
+   « Mettre en veille tous les onglets en arrière-plan .
+
+■ À propos des autorisations
+
+・activeTab  utilisée pour obtenir l’URL de l’onglet que vous consultez lorsque vous cliquez.
+・browsingData  utilisée pour supprimer les enregistrements Service Worker, le CacheStorage et le cache HTTP.
+・contextMenus  utilisée pour ajouter « Rechargement propre de tous les onglets , « Mettre en veille tous les onglets en arrière-plan  et
+  « Ouvrir la page de suppression du cache DNS  au menu du clic droit de l’icône.
+・tabs  utilisée pour obtenir les URL de tous les onglets, supprimer leur cache, puis les recharger ou libérer leur mémoire.

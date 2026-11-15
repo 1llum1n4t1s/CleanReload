@@ -1,0 +1,59 @@
+Extensión de Chrome que, con un solo clic, borra la caché de la página que está viendo y la recarga.
+También elimina los registros de Service Worker y la CacheStorage que una recarga forzada normal (Ctrl+Shift+R) deja intactos,
+de modo que, en el desarrollo y la depuración web, puede evitar los archivos antiguos almacenados en caché y comprobar el estado más reciente.
+
+■ Funciones principales
+
+・Recarga limpia profunda con un solo clic
+  Al hacer clic en el icono de la barra de herramientas, se realiza lo siguiente en la página que está viendo:
+  1. Eliminación de los registros de Service Worker y de la CacheStorage del origen de la página
+  2. Inicio del borrado de la caché HTTP del mismo origen
+  3. Recarga de la página omitiendo la caché
+  La página se recarga aunque el borrado de la caché falle.
+
+・Recarga limpia de todas las pestañas a la vez
+  Haga clic con el botón derecho en el icono de la barra de herramientas → "Recarga limpia de todas las pestañas" para borrar la caché de cada origen
+  y recargar todas las pestañas abiertas (excepto las páginas no compatibles que se indican más abajo).
+
+・Forzar la suspensión de todas las pestañas en segundo plano
+  Haga clic con el botón derecho en el icono de la barra de herramientas → "Forzar la suspensión de todas las pestañas en segundo plano" para liberar de la memoria
+  las pestañas que no está viendo. Las pestañas no se cierran; se recargan automáticamente la próxima vez que las seleccione.
+  La pestaña que se está viendo en cada ventana queda excluida.
+
+・Abrir la página para borrar la caché DNS
+  Haga clic con el botón derecho en el icono de la barra de herramientas → "Abrir la página para borrar la caché DNS" para abrir en una pestaña nueva
+  la página de la caché DNS del navegador. Pulse "Clear host cache" en esa página para borrarla.
+  La recarga limpia normal no borra la caché DNS.
+
+・Sin recopilación de datos ni comunicación externa
+  No se recopilan datos de navegación ni se envían al exterior. No tiene pantalla de ajustes, así que puede usarla nada más instalarla.
+
+■ Alcance del borrado y páginas no compatibles
+
+・La caché se borra por origen (la combinación de protocolo, host y puerto).
+  También se borra la caché de otras páginas del mismo origen.
+・No se eliminan los datos que no sean la caché, como las cookies, el estado de inicio de sesión, el historial de navegación o las contraseñas.
+・Las páginas internas del navegador, como la de ajustes o las de extensiones, no son compatibles con la recarga limpia.
+・En los archivos HTML locales (file:), no se borra la caché; solo se recarga la página omitiendo la caché.
+・La marca "✓" que aparece en el icono al hacer clic indica que el proceso ha comenzado, no que el borrado haya tenido éxito.
+
+■ Recomendada para
+
+・Desarrolladores web: cuando los cambios de CSS / JavaScript no se reflejan por culpa de la caché
+・Comprobación de PWA: cuando quedan un Service Worker o una caché antiguos y no aparece la versión más reciente
+・Cualquier usuario: para actualizar una página que se ve mal
+
+■ Cómo usarla
+
+1. En la página que quiera recargar, haga clic en el icono de la barra de herramientas.
+2. Para procesar todas las pestañas a la vez, haga clic con el botón derecho en el icono y elija "Recarga limpia de todas las pestañas".
+3. Para liberar la memoria de las pestañas que no está viendo, haga clic con el botón derecho en el icono y elija
+   "Forzar la suspensión de todas las pestañas en segundo plano".
+
+■ Sobre los permisos
+
+・activeTab: se usa para obtener la URL de la pestaña que está viendo cuando hace clic.
+・browsingData: se usa para eliminar los registros de Service Worker, la CacheStorage y la caché HTTP.
+・contextMenus: se usa para añadir "Recarga limpia de todas las pestañas", "Forzar la suspensión de todas las pestañas en segundo plano" y
+  "Abrir la página para borrar la caché DNS" al menú del botón derecho del icono.
+・tabs: se usa para obtener las URL de todas las pestañas, borrar su caché y luego recargarlas o liberar su memoria.

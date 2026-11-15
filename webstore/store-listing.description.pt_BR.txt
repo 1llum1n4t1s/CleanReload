@@ -1,0 +1,59 @@
+Extensão do Chrome que, com um clique, limpa o cache da página que você está vendo e a recarrega.
+Ela também remove os registros de Service Worker e o CacheStorage que um recarregamento forçado normal (Ctrl+Shift+R) deixa para trás,
+para que, no desenvolvimento e na depuração web, você evite arquivos antigos em cache e confira o estado mais recente.
+
+■ Principais recursos
+
+・Recarga limpa profunda com um clique
+  Ao clicar no ícone da barra de ferramentas, o seguinte é feito na página que você está vendo:
+  1. Remoção dos registros de Service Worker e do CacheStorage da origem da página
+  2. Início da limpeza do cache HTTP da mesma origem
+  3. Recarregamento da página ignorando o cache
+  A página é recarregada mesmo que a limpeza do cache falhe.
+
+・Recarga limpa de todas as abas de uma vez
+  Clique com o botão direito no ícone da barra de ferramentas → "Recarga limpa de todas as abas" para limpar o cache de cada origem
+  e recarregar todas as abas abertas (exceto as páginas sem suporte listadas abaixo).
+
+・Forçar a suspensão de todas as abas em segundo plano
+  Clique com o botão direito no ícone da barra de ferramentas → "Forçar a suspensão de todas as abas em segundo plano" para liberar da memória
+  as abas que você não está vendo. As abas não são fechadas; elas são recarregadas automaticamente na próxima vez que você as selecionar.
+  A aba exibida em cada janela fica de fora.
+
+・Abrir a página de limpeza do cache DNS
+  Clique com o botão direito no ícone da barra de ferramentas → "Abrir a página de limpeza do cache DNS" para abrir em uma nova aba
+  a página do cache DNS do navegador. Clique em "Clear host cache" nessa página para limpá-lo.
+  A recarga limpa normal não limpa o cache DNS.
+
+・Sem coleta de dados e sem comunicação externa
+  Nenhum dado de navegação é coletado nem enviado para fora. Não há tela de configurações, então você pode usar a extensão logo após instalá-la.
+
+■ Escopo da limpeza e páginas sem suporte
+
+・O cache é limpo por origem (a combinação de protocolo, host e porta).
+  O cache de outras páginas da mesma origem também é limpo.
+・Dados que não sejam o cache, como cookies, estado de login, histórico de navegação e senhas, não são excluídos.
+・Páginas internas do navegador, como a de configurações e as de extensões, não têm suporte para a recarga limpa.
+・Em arquivos HTML locais (file:), o cache não é limpo; a página apenas é recarregada ignorando o cache.
+・O "✓" exibido no ícone ao clicar indica que o processamento começou, e não que a limpeza foi bem-sucedida.
+
+■ Recomendada para
+
+・Desenvolvedores web: quando alterações de CSS / JavaScript não aparecem por causa do cache
+・Verificação de PWA: quando um Service Worker ou cache antigo permanece e a versão mais recente não aparece
+・Qualquer pessoa: para atualizar uma página que parece estar com problema
+
+■ Como usar
+
+1. Na página que você quer recarregar, clique no ícone da barra de ferramentas.
+2. Para processar todas as abas de uma vez, clique com o botão direito no ícone e escolha "Recarga limpa de todas as abas".
+3. Para liberar a memória das abas que você não está vendo, clique com o botão direito no ícone e escolha
+   "Forçar a suspensão de todas as abas em segundo plano".
+
+■ Sobre as permissões
+
+・activeTab: usada para obter a URL da aba que você está vendo quando clica.
+・browsingData: usada para remover os registros de Service Worker, o CacheStorage e o cache HTTP.
+・contextMenus: usada para adicionar "Recarga limpa de todas as abas", "Forçar a suspensão de todas as abas em segundo plano" e
+  "Abrir a página de limpeza do cache DNS" ao menu de clique com o botão direito do ícone.
+・tabs: usada para obter as URLs de todas as abas, limpar o cache delas e depois recarregá-las ou liberar a memória.

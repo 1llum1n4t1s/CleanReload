@@ -1,0 +1,59 @@
+Eine Chrome-Erweiterung, die mit einem Klick den Cache der aktuell angezeigten Seite löscht und die Seite anschließend neu lädt.
+Sie entfernt außerdem die Service-Worker-Registrierungen und den CacheStorage, die ein normales hartes Neuladen (Strg+Umschalt+R) übrig lässt,
+sodass Sie bei der Webentwicklung und beim Debuggen veraltete Dateien aus dem Cache umgehen und den neuesten Stand prüfen können.
+
+■ Hauptfunktionen
+
+・Gründliches sauberes Neuladen mit einem Klick
+  Wenn Sie auf das Symbol in der Symbolleiste klicken, passiert für die angezeigte Seite Folgendes:
+  1. Die Service-Worker-Registrierungen und der CacheStorage des Ursprungs (Origin) der Seite werden entfernt
+  2. Das Leeren des HTTP-Caches desselben Ursprungs wird gestartet
+  3. Die Seite wird unter Umgehung des Caches neu geladen
+  Die Seite wird auch dann neu geladen, wenn das Leeren des Caches fehlschlägt.
+
+・Alle Tabs auf einmal sauber neu laden
+  Klicken Sie mit der rechten Maustaste auf das Symbol in der Symbolleiste → „Alle Tabs sauber neu laden“, um den Cache jedes Ursprungs zu leeren
+  und anschließend alle geöffneten Tabs neu zu laden (mit Ausnahme der unten aufgeführten nicht unterstützten Seiten).
+
+・Alle Hintergrund-Tabs in den Ruhezustand versetzen
+  Klicken Sie mit der rechten Maustaste auf das Symbol in der Symbolleiste → „Alle Hintergrund-Tabs in den Ruhezustand versetzen“, um nicht angezeigte Tabs aus dem Arbeitsspeicher freizugeben.
+  Die Tabs werden nicht geschlossen; sie werden beim nächsten Auswählen automatisch neu geladen.
+  Der in jedem Fenster angezeigte Tab ist davon ausgenommen.
+
+・Seite zum Leeren des DNS-Caches öffnen
+  Klicken Sie mit der rechten Maustaste auf das Symbol in der Symbolleiste → „Seite zum Leeren des DNS-Caches öffnen“, um die DNS-Cache-Seite
+  des Browsers in einem neuen Tab zu öffnen. Klicken Sie auf dieser Seite auf „Clear host cache“, um den Cache zu leeren.
+  Ein normales sauberes Neuladen leert den DNS-Cache nicht.
+
+・Keine Datenerfassung, keine externe Kommunikation
+  Es werden keine Browserdaten erfasst oder irgendwohin gesendet. Es gibt keine Einstellungsseite, sodass Sie die Erweiterung direkt nach der Installation nutzen können.
+
+■ Umfang des Löschens und nicht unterstützte Seiten
+
+・Der Cache wird pro Ursprung (Kombination aus Protokoll, Host und Port) geleert.
+  Der Cache anderer Seiten desselben Ursprungs wird ebenfalls geleert.
+・Andere Daten als der Cache, etwa Cookies, Anmeldestatus, Browserverlauf und Passwörter, werden nicht gelöscht.
+・Browserinterne Seiten wie die Einstellungsseite des Browsers und Erweiterungsseiten werden vom sauberen Neuladen nicht unterstützt.
+・Bei lokalen HTML-Dateien (file:) wird der Cache nicht geleert; die Seite wird nur unter Umgehung des Caches neu geladen.
+・Das „✓“, das beim Klicken am Symbol erscheint, zeigt an, dass die Verarbeitung gestartet wurde; es bedeutet nicht, dass das Löschen erfolgreich war.
+
+■ Empfohlen für
+
+・Webentwickler: wenn CSS- und JavaScript-Änderungen wegen des Caches nicht übernommen werden
+・PWA-Prüfung: wenn ein alter Service Worker oder Cache bestehen bleibt und die neueste Version nicht angezeigt wird
+・Alle Nutzer: zum Aktualisieren einer Seite, die fehlerhaft aussieht
+
+■ Verwendung
+
+1. Klicken Sie auf der Seite, die Sie neu laden möchten, auf das Symbol in der Symbolleiste.
+2. Um alle Tabs auf einmal zu verarbeiten, klicken Sie mit der rechten Maustaste auf das Symbol und wählen Sie „Alle Tabs sauber neu laden“.
+3. Um den Arbeitsspeicher nicht angezeigter Tabs freizugeben, klicken Sie mit der rechten Maustaste auf das Symbol und wählen Sie
+   „Alle Hintergrund-Tabs in den Ruhezustand versetzen“.
+
+■ Zu den Berechtigungen
+
+・activeTab: Wird verwendet, um beim Klicken die URL des angezeigten Tabs abzurufen.
+・browsingData: Wird verwendet, um Service-Worker-Registrierungen, CacheStorage und den HTTP-Cache zu entfernen.
+・contextMenus: Wird verwendet, um „Alle Tabs sauber neu laden“, „Alle Hintergrund-Tabs in den Ruhezustand versetzen“ und
+  „Seite zum Leeren des DNS-Caches öffnen“ zum Rechtsklickmenü des Symbols hinzuzufügen.
+・tabs: Wird verwendet, um die URLs aller Tabs abzurufen, deren Cache zu leeren und sie anschließend neu zu laden oder ihren Arbeitsspeicher freizugeben.
