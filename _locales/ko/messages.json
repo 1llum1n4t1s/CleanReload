@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "클릭 한 번으로 캐시를 완전히 지우고 페이지를 새로고침합니다."
+  },
+  "appDescriptionFirefox": {
+    "message": "클릭 한 번으로 Service Worker 등록과 HTTP 캐시를 지우고 페이지를 새로고침합니다."
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "모든 탭 클린 새로고침"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "모든 백그라운드 탭 강제 절전"
+  },
+  "menuOpenDnsCache": {
+    "message": "DNS 캐시 삭제 화면 열기"
+  },
+  "kagayoiSupportContact": {
+    "message": "문의하기"
+  },
+  "kagayoiSupportRate": {
+    "message": "평가해 주세요!"
+  }
+}

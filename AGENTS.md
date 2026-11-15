@@ -15,20 +15,24 @@ Clean Reload — ワンクリックで Service Worker 登録と HTTP キャッ�
 ```bash
 bun install                # 依存関係インストール（sharp + puppeteer/Chromium DL、初回は重い）
 bun --bun run generate-icons     # icons/icon.svg → icons/icon-{16,48,128}.png（sharp のみ使用）
-bun --bun run generate-screenshots # webstore/*.html → webstore/images/*.png（puppeteer 使用）
+bun --bun run generate-screenshots # webstore/store-assets.json → webstore/images/<locale>/screenshot-NN.png + tile-*.png（vitrina。Windows は release で 9 言語、それ以外は smoke（en のみ・代替板）。失敗時 exit 1）
 bun --bun run build              # 上記2つを順次実行
 ```
 
 - テスト・Lint・フォーマッタの package scripts は**未定義**。`bun --bun run test` などは存在しない。Firefox 配布前には下記の `bun --bun run web-ext lint` を実行する。
 - CI と同じ依存解決には Bun 1.4.4 と `bun run deps` を使う。アイコン生成だけなら `PUPPETEER_SKIP_DOWNLOAD=1` で Chromium のダウンロードを省略できる。
 - 拡張機能本体の開発には `sharp` しか不要。`generate-screenshots` はストア画像用途で、普段のコード編集では実行しなくてよい。
-- `generate-screenshots` は Chromium の応答待ちで数分かかることがある。CDP の protocol timeout は 300 秒なので、出力が止まって見えても重複起動せず完了を待つ。
+- `generate-screenshots` は Windows の release プロファイルで実拡張を読み込み、9 言語×5 枚とタイル 2 種を作る（約 1 分。出力が止まって見えても重複起動せず完了を待つ）。作業物の既定は `D:\tmp\vitrina-CleanReload`（キットの `--work-dir` 既定値）。
+- Clean Reload は popup・content script・storage 権限が無く、操作が右クリックメニュー（ブラウザ描画）なので実 UI を撮れない。`webstore/fixtures/context-menu.html` の中立的なメニュー再現に、`_locales` の文言とアイコンを `webstore/store-assets.steps.mjs` が差し込んで撮る。vitrina の `chrome.storage` 書き込みは、同 steps ファイルが storage 権限の無い拡張向けに省く（キットは改変しない）。
+- 画像の検証・一覧は `bun webstore/vitrina/vitrina.mjs verify` と `bun webstore/vitrina/vitrina.mjs sheet --sheet-dir <D:\tmp 配下>`。画像文言は `store-assets.json` の `{ "msg": … }`（`_locales` 参照）か 9 言語の直書きで、訳は `Kagayoi.Support/clients/chrome-extension/l10n/glossary.md` に従う。
 
 ### 依存の overrides / patch（[package.json](package.json)）
 
 devDependency の `web-ext` 配下に出た脆弱性を、上流が未修正のため `overrides` で解消している（`adm-zip` / `shell-quote` / `fast-uri` / `brace-expansion` / `undici` / `js-yaml`）。拡張機能の配布物には含まれない開発時専用の依存。
 
 minimatch は `^11.0.4` へ、旧 default import を使う multimatch は `^8.0.0` へ override する。`@eslint/eslintrc@3.3.7` の ESM import は `patches/@eslint%2Feslintrc@3.3.7.patch` で named import へ修正する。Bun の `patchedDependencies` で適用し、同パッケージ更新時は上流の import と patch の要否を確認する。旧 minimatch 3 の brace-expansion interop patch は不要になった。
+
+- **Chrome を起動するスクリプトを足すときはシード必須**: puppeteer.launch・chrome-launcher・Chrome の直接起動は、起動前に user-data-dir の `Local State` へ `{"password_manager":{"os_password_blank":false,"os_password_last_changed":"9223372036854775000"}}` を書く。Windows の Chromium は新規プロファイルごとに空パスワードで LogonUser を呼び（`password_manager_util_win.cc` の `CheckBlankPasswordWithPrefs`）、ログオン失敗（Security 4625）として数えられるため、並列・連続起動で Windows アカウントがロックされる（2026-11-15 実害）。userDataDir 未指定の起動は作らず、`webstore/vitrina/lib/capture.mjs` の `seedChromeProfile`（および一時プロファイルは D:\tmp 配下）と同等の処理を先に呼ぶ。`webstore/vitrina/` は逐語コピーで対策済み。
 
 ## 開発時の読み込み
 
@@ -51,13 +55,13 @@ PowerShell スクリプトは PowerShell 7 系（`pwsh`、検証版 7.6.9）で�
 1. `manifest.json`、`manifest.firefox.json`、`package.json` の `version` を上げてコミット（3ファイルは一致必須。更新は `/vava` 経由）
 2. `release/x.y.z`（`x.y.z` は manifest の version と一致必須）ブランチを push
 3. [.github/workflows/publish.yml](.github/workflows/publish.yml) が 2 job を並列起動:
-   - **publish**（Chrome）: lockfile固定のbuild → ZIP実物verifier → receiptのSHA-256を `scripts/Publish-Cws.ps1` へ渡して提出する。
+   - **publish**（Chrome）: lockfile固定のbuild → ZIP実物verifier → receiptのSHA-256を `scripts/Publish-Cws.ps1` へ渡してアップロードする（申請は `cws-submit.yml`）。
    - **publish-firefox**（AMO）: firefox-build 構築 → `web-ext lint` → 最終XPI検証 → `scripts/Publish-Amo.ps1`
 4. ブランチ名と manifest バージョンの整合性チェックあり（不一致なら fail）。Firefox の初回登録のみ AMO Developer Hub で実施（§Firefox AMO 対応）。
 
 ## 構造と編集先
 
-構造・責務は [DESIGN.md の主要コンポーネントと境界](DESIGN.md#主要コンポーネントと境界) を参照する。アイコンの正本は `icons/icon.svg`、掲載画像の正本は `webstore/*.html`。`firefox-build/` と `web-ext-artifacts/` は Git 管理しない生成物。
+構造・責務は [DESIGN.md の主要コンポーネントと境界](DESIGN.md#主要コンポーネントと境界) を参照する。アイコンの正本は `icons/icon.svg`、掲載画像の正本は `webstore/store-assets.json`・`webstore/fixtures/`・`webstore/store-assets.steps.mjs`（生成器 `webstore/vitrina/` は Kagayoi.Support の `clients/chrome-extension/store-assets/` の逐語コピーで改変禁止）。`firefox-build/` と `web-ext-artifacts/` は Git 管理しない生成物。
 
 ## Firefox AMO 対応
 
@@ -81,7 +85,7 @@ Firefox 版は **Chrome と同じ `src/` を共有**し、`manifest.firefox.json
 `release/x.y.z` push で Chrome `publish` job と**並列・独立**に実行（`if: success() || failure()` で Chrome 失敗時も submit）。GitHub Secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` を使用。firefox-build 構築 → `web-ext lint` → `scripts/Publish-Amo.ps1` の順。
 
 ### AMO listing（説明文）の更新は API 経由（スクショは手動）
-`--dry-run` は資格情報・ネットワークなしで入力を検証する。このスクリプトはスクリーンショットを更新しないため、AMO Developer Hub から手動アップロードする（`webstore/images/*-1280x800.png`）。
+`--dry-run` は資格情報・ネットワークなしで入力を検証する。このスクリプトはスクリーンショットを更新しないため、AMO Developer Hub から手動アップロードする（`webstore/images/<ロケール>/screenshot-NN.png`）。
 
 ## 制約事項
 
@@ -106,7 +110,20 @@ bun "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs" --slug 'clean-rel
 
 ### CWS 公開のHTTP境界
 
-`publish.yml` はビルド済みZIPを `scripts/Publish-Cws.ps1`（PowerShell 7）へ渡す。既存のOAuth secrets・publisher/item IDを維持し、ZIPをストリーム送信し、upload成功を確認してからpublishする。重複・通信断・不明な応答を公開成功として扱わず、ストア状態を確認してから再開する。公開専用npm CLIは使用しない。変更時はHTTP fixtureで成功・版/ID不一致・upload失敗・publish拒否を確認する。
+`publish.yml` はビルド済みZIPを `scripts/Publish-Cws.ps1`（PowerShell 7）へ渡す。既存のOAuth secrets・publisher/item IDを維持し、ZIPをストリーム送信し、upload成功を確認する（既定の `-Stage All` はその後publishまで行うが、CIは `-Stage Upload` でアップロードだけを行い、申請は `cws-submit.yml` が `-Stage Publish` で行う）。重複・通信断・不明な応答を公開成功として扱わず、ストア状態を確認してから再開する。公開専用npm CLIは使用しない。変更時はHTTP fixtureで成功・版/ID不一致・upload失敗・publish拒否を確認する。
+
+### CWS のアップロードと申請の分離
+
+`publish.yml` は検証済みZIPを `-Stage Upload` で下書きとしてアップロードするだけで、審査へは申請しない。新ロケールの掲載画像欄はアップロード後でないと Dashboard に出ないため、申請は別workflow `.github/workflows/cws-submit.yml`（手動実行、`-Stage Publish`）で行う。
+
+1. `release/x.y.z` を push する（publish.yml がアップロードする）
+2. Dashboard（Edictora）でロケール別の掲載画像などを整えて下書き保存する
+3. `gh workflow run cws-submit.yml -f version=x.y.z --ref release/x.y.z` で申請する
+
+- API v2 は未申請の下書き版を返さないため、下書きの版そのものは確認できない。`cws-submit.yml` は次を満たす場合だけ `:publish` する: 実行 ref が `release/<version>` で manifest の版が入力と一致する。`publish.yml` の直近のアップロード成功 run（固定ステップ名 `Chrome Web Store にアップロード（下書き）`。`actions: read` で履歴を参照）が同じ commit である。fetchStatus で item identity・直近アップロード状態・公開/審査中の版を確認できる。
+- 同版が申請済み・公開済み（PENDING_REVIEW / STAGED / PUBLISHED / PUBLISHED_TO_TESTERS）なら再送せず成功終了する。別版の審査中、より新しい版の存在、直近アップロードの進行中・失敗、状態不明は申請せず停止する。
+- Dashboard で手動アップロードした下書きなど、同じ commit のアップロード成功 run が無い場合は申請されない。その場合は Dashboard から手動で申請する。
+- 両workflowは同じ concurrency group で直列化する。申請中は Dashboard の操作を並行しない。
 
 ### AMO 公開のHTTP境界
 

@@ -16,7 +16,7 @@ Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用
 | `manifest.firefox.json` | Firefox 用権限、event page、Gecko 固有設定の定義 | 同じ background を `scripts` 配列で起動し、Firefox 142 以降を対象にする |
 | `src/background/background.js` | Action、右クリックメニュー、キャッシュ削除、再読み込み、タブ破棄 | 唯一の拡張ランタイム。Content Script や popup は持たない |
 | `icons/`、`scripts/` | SVG正本から配布用PNGを生成 | 生成PNGはGit管理せず、ローカルとCIで再生成する |
-| `webstore/`、`docs/` | Chrome掲載文は `webstore/store-listing.txt`、Firefox掲載文は `webstore/store-listing.firefox.{ja,en}.txt`、プライバシーは `docs/privacy-policy{,.en}.md` | 掲載画像は `webstore/generate-screenshots.js` がHTMLから生成。いずれもランタイム配布物には含めない |
+| `webstore/`、`docs/` | Chrome掲載文は `webstore/store-listing.txt`、Firefox掲載文は `webstore/store-listing.firefox.{ja,en}.txt`、プライバシーは `docs/privacy-policy{,.en}.md` | 掲載画像は `webstore/store-assets.json`（vitrina、`webstore/vitrina/` は共通キットの逐語コピー）から9言語で生成。いずれもランタイム配布物には含めない |
 | `.amo-metadata.json`、`AGENTS.md` | AMO提出時のカテゴリ・ライセンス、listing更新時の入力定義 | バイナリ提出と説明文更新は別経路。後者は掲載文・プライバシーファイルを参照する |
 | `.github/workflows/publish.yml` | Chrome Web StoreとFirefox AMOへの公開 | `release/x.y.z` pushで2ジョブを独立実行する |
 | `../vps-web/lp/cleanreload/` | LP、プライバシー、静的素材のHTTP配信 | 未知パスは404。既知パスはGET / HEADを許可し、その他のmethodは405にする |

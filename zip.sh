@@ -25,6 +25,7 @@ fi
 
 zip -r - \
   manifest.json \
+  _locales/ \
   icons/ \
   src/ \
   -x "*.DS_Store" "*.swp" "*~" > ./clean-reload.zip

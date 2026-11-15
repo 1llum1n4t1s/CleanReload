@@ -23,7 +23,7 @@ Write-Host "ZIPファイルを作成中..." -ForegroundColor Cyan
 Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 $files = @(
     Get-Item -LiteralPath (Join-Path $PSScriptRoot 'manifest.json')
-    Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'icons'), (Join-Path $PSScriptRoot 'src') -Recurse -File -Force |
+    Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '_locales'), (Join-Path $PSScriptRoot 'icons'), (Join-Path $PSScriptRoot 'src') -Recurse -File -Force |
         Where-Object { $_.Name -notlike '*.DS_Store' -and $_.Name -notlike '*.swp' -and $_.Name -notlike '*~' }
 )
 $stream = [IO.File]::Open((Join-Path $PSScriptRoot $zipName), [IO.FileMode]::Create)

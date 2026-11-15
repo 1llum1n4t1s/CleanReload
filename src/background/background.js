@@ -2,6 +2,10 @@
 // .catch() チェーンを両ブラウザで統一する
 const api = (typeof browser !== 'undefined') ? browser : chrome;
 
+// 共通の多言語モジュール。Chrome の Service Worker はここで読み込み、
+// Firefox は manifest.firefox.json の background.scripts 先頭で読み込む（importScripts が無いため）。
+if (typeof importScripts === 'function') importScripts('../shared/ui-localizer.js');
+
 // Firefox は browsingData.RemovalOptions.origins を非対応（MDN BCD: version_added=false）。
 // さらに removeCache は options を無視して常に全 HTTP キャッシュを消す仕様。
 // そのため Firefox では「Service Worker 登録を hostnames で絞って削除（FF77+）
@@ -92,25 +96,45 @@ api.action.onClicked.addListener(async (tab) => {
   await cleanReloadTab(tab);
 });
 
-api.runtime.onInstalled.addListener(() => {
-  api.contextMenus.create({
-    id: 'clean-reload-all-tabs',
-    title: '全タブをクリーンリロード',
-    contexts: ['action'],
-  });
-  api.contextMenus.create({
-    id: 'discard-all-background-tabs',
-    title: '全バックグラウンドタブを強制スリープ',
-    contexts: ['action'],
-  });
-  if (!isFirefox) {
+// コンテキストメニューのタイトルは作成時に固定されるため、言語が変わったら作り直す。
+// removeAll → create を直列に行い、連続呼び出しでも重複 ID を作らないよう直前の処理を待つ。
+let menuBuild = Promise.resolve();
+function rebuildMenus() {
+  menuBuild = menuBuild.then(async () => {
+    await Localizer.ready;
+    await api.contextMenus.removeAll();
     api.contextMenus.create({
-      id: 'open-dns-cache',
-      title: 'DNSキャッシュの削除画面を開く',
+      id: 'clean-reload-all-tabs',
+      title: Localizer.t('menuCleanReloadAllTabs', undefined, 'Clean reload all tabs'),
       contexts: ['action'],
     });
-  }
+    api.contextMenus.create({
+      id: 'discard-all-background-tabs',
+      title: Localizer.t('menuDiscardBackgroundTabs', undefined, 'Force all background tabs to sleep'),
+      contexts: ['action'],
+    });
+    if (!isFirefox) {
+      api.contextMenus.create({
+        id: 'open-dns-cache',
+        title: Localizer.t('menuOpenDnsCache', undefined, 'Open the DNS cache clearing page'),
+        contexts: ['action'],
+      });
+    }
+  }).catch(error => {
+    console.warn('Clean Reload: menu rebuild failed:', error.message);
+  });
+  return menuBuild;
+}
+
+api.runtime.onInstalled.addListener(async () => {
+  await Localizer.ready;
+  // 拡張の更新後に辞書が古ければ作り直してからメニューを作る。
+  await Localizer.ensureFresh();
+  await rebuildMenus();
 });
+// ブラウザの言語が変わった後の起動でもタイトルを追従させる。
+api.runtime.onStartup.addListener(() => { rebuildMenus(); });
+Localizer.onChange(() => { rebuildMenus(); });
 
 api.contextMenus.onClicked.addListener(async (info) => {
   if (info.menuItemId === 'open-dns-cache') {

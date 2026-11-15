@@ -21,9 +21,9 @@ export function verifySource() {
   const version = chrome.version;
   check(process.env.RELEASE_REF_NAME === `release/${version}`, 'release branch/version mismatch');
   check(firefox.version === version && json('package.json').version === version, 'manifest/package versions differ');
-  execFileSync('git', ['diff', '--exit-code', 'HEAD', '--', 'manifest.json', 'manifest.firefox.json', 'package.json', 'src', 'icons/icon.svg'], { cwd: root, stdio: 'pipe' });
+  execFileSync('git', ['diff', '--exit-code', 'HEAD', '--', 'manifest.json', 'manifest.firefox.json', 'package.json', '_locales', 'src', 'icons/icon.svg'], { cwd: root, stdio: 'pipe' });
   check(chrome.manifest_version === 3 && chrome.background?.service_worker === 'src/background/background.js' && !chrome.background.scripts, 'invalid Chrome background');
-  check(firefox.manifest_version === 3 && !firefox.background?.service_worker && JSON.stringify(firefox.background?.scripts) === '["src/background/background.js"]', 'invalid Firefox background');
+  check(firefox.manifest_version === 3 && !firefox.background?.service_worker && JSON.stringify(firefox.background?.scripts) === '["src/shared/ui-localizer.js","src/background/background.js"]', 'invalid Firefox background');
   const gecko = firefox.browser_specific_settings?.gecko;
   check(gecko?.id === '{a4a7df25-9281-44f6-9d06-5959599c6473}' && gecko.strict_min_version === '142.0', 'invalid Firefox identity/minimum version');
   check(JSON.stringify(gecko.data_collection_permissions?.required) === '["none"]', 'invalid Firefox data permissions');
@@ -58,14 +58,14 @@ export async function verifyArtifact(archivePath, variant) {
   check(end >= 0 && bytes.readUInt32LE(end) === 0x06054b50 && bytes.readUInt16LE(end + 4) === 0 && bytes.readUInt16LE(end + 6) === 0, 'invalid or multi-disk ZIP');
   check(bytes.readUInt16LE(end + 10) === Object.keys(zip.files).length, 'duplicate entries or unsupported ZIP64');
   const expected = new Map([['manifest.json', readFileSync(path.join(root, variant === 'chrome' ? 'manifest.json' : 'manifest.firefox.json'))]]);
-  for (const folder of ['icons', 'src']) for (const [name, data] of sourceFiles(path.join(root, folder), `${folder}/`)) expected.set(name, data);
+  for (const folder of ['_locales', 'icons', 'src']) for (const [name, data] of sourceFiles(path.join(root, folder), `${folder}/`)) expected.set(name, data);
   for (const required of ['icons/icon.svg', 'icons/icon-16.png', 'icons/icon-48.png', 'icons/icon-128.png', 'src/background/background.js']) check(expected.has(required), `missing required source: ${required}`);
   const hashes = {};
   for (const [name, entry] of Object.entries(zip.files)) {
     check(entry.unsafeOriginalName === undefined || entry.unsafeOriginalName === name, 'unsafe ZIP entry');
     check(!name.includes('\\') && !name.split('/').some(part => part === '..' || part === '.'), 'unsafe ZIP path');
     if (entry.dir) {
-      check(/^(icons|src)\//.test(name), `unexpected directory: ${name}`);
+      check(/^(_locales|icons|src)\//.test(name), `unexpected directory: ${name}`);
       continue;
     }
     check(expected.has(name), `unexpected file: ${name}`);

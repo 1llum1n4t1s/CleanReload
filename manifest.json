@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Clean Reload",
-  "description": "ワンクリックでキャッシュを完全クリアしてページを再読み込みします。",
+  "default_locale": "en",
+  "name": "__MSG_appName__",
+  "description": "__MSG_appDescription__",
   "version": "1.0.18",
   "action": {
     "default_icon": {
@@ -9,7 +10,7 @@
       "48": "icons/icon-48.png",
       "128": "icons/icon-128.png"
     },
-    "default_title": "Clean Reload"
+    "default_title": "__MSG_appName__"
   },
   "icons": {
     "16": "icons/icon-16.png",

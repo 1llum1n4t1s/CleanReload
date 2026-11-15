@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "ワンクリックでキャッシュを完全クリアしてページを再読み込みします。"
+  },
+  "appDescriptionFirefox": {
+    "message": "ワンクリックで Service Worker 登録と HTTP キャッシュをクリアしてページを再読み込みします。"
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "全タブをクリーンリロード"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "全バックグラウンドタブを強制スリープ"
+  },
+  "menuOpenDnsCache": {
+    "message": "DNSキャッシュの削除画面を開く"
+  },
+  "kagayoiSupportContact": {
+    "message": "お問い合わせ"
+  },
+  "kagayoiSupportRate": {
+    "message": "評価をお願いします！"
+  }
+}

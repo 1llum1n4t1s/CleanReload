@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "Borra la caché por completo y recarga la página con un solo clic."
+  },
+  "appDescriptionFirefox": {
+    "message": "Borra los registros de Service Worker y la caché HTTP con un solo clic y recarga la página."
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "Recarga limpia de todas las pestañas"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "Forzar la suspensión de todas las pestañas en segundo plano"
+  },
+  "menuOpenDnsCache": {
+    "message": "Abrir la página para borrar la caché DNS"
+  },
+  "kagayoiSupportContact": {
+    "message": "Contactar con soporte"
+  },
+  "kagayoiSupportRate": {
+    "message": "¡Déjenos su valoración!"
+  }
+}

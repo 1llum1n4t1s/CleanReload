@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "Clear the cache completely and reload the page with one click."
+  },
+  "appDescriptionFirefox": {
+    "message": "Clear Service Worker registrations and the HTTP cache with one click, then reload the page."
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "Clean reload all tabs"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "Force all background tabs to sleep"
+  },
+  "menuOpenDnsCache": {
+    "message": "Open the DNS cache clearing page"
+  },
+  "kagayoiSupportContact": {
+    "message": "Contact support"
+  },
+  "kagayoiSupportRate": {
+    "message": "Please rate us!"
+  }
+}

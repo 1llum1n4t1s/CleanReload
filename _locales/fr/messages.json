@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "Vide entièrement le cache et recharge la page en un seul clic."
+  },
+  "appDescriptionFirefox": {
+    "message": "Supprime les enregistrements Service Worker et le cache HTTP en un seul clic, puis recharge la page."
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "Rechargement propre de tous les onglets"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "Mettre en veille tous les onglets en arrière-plan"
+  },
+  "menuOpenDnsCache": {
+    "message": "Ouvrir la page de suppression du cache DNS"
+  },
+  "kagayoiSupportContact": {
+    "message": "Contacter le support"
+  },
+  "kagayoiSupportRate": {
+    "message": "Évaluez-nous !"
+  }
+}

@@ -7,7 +7,7 @@
   "scripts": {
     "deps": "bun scripts/Install-Dependencies.mjs",
     "generate-icons": "bun scripts/generate-icons.js",
-    "generate-screenshots": "bun webstore/generate-screenshots.js",
+    "generate-screenshots": "bun webstore/vitrina/vitrina.mjs generate",
     "build": "bun --bun run generate-icons && bun --bun run generate-screenshots",
     "test:dependencies": "bun test ./scripts/dependency-security.test.cjs"
   },

@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "Leert den Cache vollständig und lädt die Seite mit einem Klick neu."
+  },
+  "appDescriptionFirefox": {
+    "message": "Löscht Service-Worker-Registrierungen und den HTTP-Cache mit einem Klick und lädt die Seite neu."
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "Alle Tabs sauber neu laden"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "Alle Hintergrund-Tabs in den Ruhezustand versetzen"
+  },
+  "menuOpenDnsCache": {
+    "message": "Seite zum Leeren des DNS-Caches öffnen"
+  },
+  "kagayoiSupportContact": {
+    "message": "Support kontaktieren"
+  },
+  "kagayoiSupportRate": {
+    "message": "Bitte bewerten Sie uns!"
+  }
+}

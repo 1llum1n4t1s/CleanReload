@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "一鍵徹底清除快取並重新載入頁面。"
+  },
+  "appDescriptionFirefox": {
+    "message": "一鍵清除 Service Worker 註冊和 HTTP 快取，並重新載入頁面。"
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "徹底重新整理所有分頁"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "強制所有背景分頁進入休眠"
+  },
+  "menuOpenDnsCache": {
+    "message": "開啟 DNS 快取清除頁面"
+  },
+  "kagayoiSupportContact": {
+    "message": "聯絡支援"
+  },
+  "kagayoiSupportRate": {
+    "message": "請為我們評分！"
+  }
+}

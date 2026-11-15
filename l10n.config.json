@@ -1,0 +1,6 @@
+{
+  "localesDir": "_locales",
+  "manifests": ["manifest.json", "manifest.firefox.json"],
+  "localizerPath": "src/shared/ui-localizer.js",
+  "languageSwitcher": false
+}

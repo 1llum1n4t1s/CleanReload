@@ -1,0 +1,26 @@
+{
+  "appName": {
+    "message": "Clean Reload"
+  },
+  "appDescription": {
+    "message": "一键彻底清除缓存并重新加载页面。"
+  },
+  "appDescriptionFirefox": {
+    "message": "一键清除 Service Worker 注册和 HTTP 缓存，并重新加载页面。"
+  },
+  "menuCleanReloadAllTabs": {
+    "message": "彻底刷新所有标签页"
+  },
+  "menuDiscardBackgroundTabs": {
+    "message": "强制所有后台标签页休眠"
+  },
+  "menuOpenDnsCache": {
+    "message": "打开 DNS 缓存清除页面"
+  },
+  "kagayoiSupportContact": {
+    "message": "联系支持"
+  },
+  "kagayoiSupportRate": {
+    "message": "请给我们评分！"
+  }
+}
