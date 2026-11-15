@@ -1,4 +1,7 @@
 name: Publish to Chrome Web Store + Firefox AMO
+# CWS は「アップロード」と「審査への申請」を別 workflow に分けている。
+# この workflow は検証済みZIPを下書きとしてアップロードするだけで、申請しない。
+# 申請は掲載画像などを Dashboard で整えた後に、cws-submit.yml を手動で実行する。
 
 on:
   push:
@@ -19,7 +22,7 @@ concurrency:
 
 jobs:
   publish:
-    name: Chrome Web Store 公開
+    name: Chrome Web Store アップロード（申請は cws-submit.yml）
     runs-on: ubuntu-latest
     env:
       # CI では scripts/generate-icons.js（sharp）しか実行しないので puppeteer の Chromium (~200MB) は不要
@@ -85,11 +88,11 @@ jobs:
 
       - name: zip パッケージを作成
         run: |
-          zip -r clean-reload.zip manifest.json icons src \
+          zip -r clean-reload.zip manifest.json _locales icons src \
             -x "*.DS_Store" "*.swp" "*~"
           ls -lh clean-reload.zip
 
-      - name: Chrome Web Store にアップロード & 公開
+      - name: Chrome Web Store にアップロード（下書き）
         env:
           CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
@@ -100,7 +103,7 @@ jobs:
           pwsh -NoProfile -File scripts/Test-PublishCws.ps1 -WorkDirectory "$RUNNER_TEMP/cws-publisher-tests"
           bun scripts/verify-release-artifact.mjs chrome clean-reload.zip > "$RUNNER_TEMP/clean-reload-verified.json"
           CHROME_SHA256=$(python3 -c 'import json,os; print(json.load(open(os.environ["RUNNER_TEMP"]+"/clean-reload-verified.json"))["sha256"])')
-          pwsh -NoProfile -File scripts/Publish-Cws.ps1 -Archive "clean-reload.zip" -ExpectedSha256 "$CHROME_SHA256"
+          pwsh -NoProfile -File scripts/Publish-Cws.ps1 -Archive "clean-reload.zip" -ExpectedSha256 "$CHROME_SHA256" -Stage Upload
 
   publish-firefox:
     name: Firefox AMO に submission
@@ -154,11 +157,12 @@ jobs:
 
       - name: Firefox 用ソースディレクトリを構築
         # manifest.firefox.json を manifest.json として配置し、icons / src を同梱。
-        # CleanReload は _locales を使わない（name / description 直書き）ので _locales のコピーは不要。
+        # name / description と UI 文言は _locales（9言語）から解決するため _locales も同梱する。
         # background は manifest.firefox.json 側で scripts 配列にしてある（Firefox MV3 は service_worker 非対応）。
         run: |
           mkdir -p firefox-build
           cp manifest.firefox.json firefox-build/manifest.json
+          cp -r _locales firefox-build/
           cp -r icons firefox-build/
           cp -r src firefox-build/
           find firefox-build \( -name "*.DS_Store" -o -name "*.swp" -o -name "*~" \) -delete
