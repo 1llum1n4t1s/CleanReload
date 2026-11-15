@@ -1,0 +1,426 @@
+{
+  "brand": "Clean Reload",
+  "icon": "icons/icon.svg",
+  "extensionDir": ".",
+  "palette": {
+    "primary": "#29A3E8",
+    "secondary": "#F5B82E"
+  },
+  "locales": [
+    "en",
+    "ja",
+    "zh_CN",
+    "zh_TW",
+    "ko",
+    "es",
+    "fr",
+    "de",
+    "pt_BR"
+  ],
+  "captures": [
+    {
+      "id": "menu-hero",
+      "kind": "page",
+      "url": "https://app.example.test/index.html?v=menu",
+      "fixture": "context-menu.html",
+      "waitFor": "#stage",
+      "clip": {
+        "selector": "#stage"
+      },
+      "width": 520,
+      "height": 360
+    },
+    {
+      "id": "menu-all",
+      "kind": "page",
+      "url": "https://app.example.test/index.html?v=all",
+      "fixture": "context-menu.html",
+      "waitFor": "#stage",
+      "clip": {
+        "selector": "#stage"
+      },
+      "width": 520,
+      "height": 360
+    },
+    {
+      "id": "menu-sleep",
+      "kind": "page",
+      "url": "https://app.example.test/index.html?v=sleep",
+      "fixture": "context-menu.html",
+      "waitFor": "#stage",
+      "clip": {
+        "selector": "#stage"
+      },
+      "width": 520,
+      "height": 360
+    }
+  ],
+  "slides": [
+    {
+      "layout": "hero",
+      "capture": "menu-hero",
+      "tagline": {
+        "msg": "appDescription"
+      },
+      "chips": [
+        {
+          "en": "One click on the toolbar icon",
+          "ja": "ツールバーのアイコンをワンクリック",
+          "zh_CN": "点击工具栏图标即可",
+          "zh_TW": "點一下工具列圖示即可",
+          "ko": "툴바 아이콘을 한 번 클릭",
+          "es": "Un clic en el icono de la barra",
+          "fr": "Un clic sur l’icône de la barre",
+          "de": "Ein Klick auf das Symbol in der Symbolleiste",
+          "pt_BR": "Um clique no ícone da barra de ferramentas"
+        },
+        {
+          "en": "Reload all tabs at once",
+          "ja": "全タブをまとめて再読み込み",
+          "zh_CN": "一次刷新所有标签页",
+          "zh_TW": "一次重新整理所有分頁",
+          "ko": "모든 탭을 한 번에 새로고침",
+          "es": "Recarga de todas las pestañas a la vez",
+          "fr": "Rechargement de tous les onglets d’un coup",
+          "de": "Alle Tabs auf einmal neu laden",
+          "pt_BR": "Recarga de todas as abas de uma vez"
+        },
+        {
+          "en": "No data collected",
+          "ja": "データ収集なし",
+          "zh_CN": "不收集任何数据",
+          "zh_TW": "不蒐集任何資料",
+          "ko": "데이터 수집 없음",
+          "es": "Sin recopilación de datos",
+          "fr": "Aucune collecte de données",
+          "de": "Keine Datenerhebung",
+          "pt_BR": "Nenhuma coleta de dados"
+        }
+      ]
+    },
+    {
+      "layout": "steps",
+      "title": {
+        "en": "What one click does",
+        "ja": "1クリックで行うこと",
+        "zh_CN": "一次点击会做什么",
+        "zh_TW": "一次點擊會做什麼",
+        "ko": "한 번 클릭하면 일어나는 일",
+        "es": "Qué hace un solo clic",
+        "fr": "Ce que fait un seul clic",
+        "de": "Das passiert mit einem Klick",
+        "pt_BR": "O que um clique faz"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "Remove Service Workers",
+            "ja": "Service Workerを削除",
+            "zh_CN": "删除 Service Worker",
+            "zh_TW": "刪除 Service Worker",
+            "ko": "Service Worker 삭제",
+            "es": "Eliminar los Service Workers",
+            "fr": "Supprimer les Service Workers",
+            "de": "Service Worker entfernen",
+            "pt_BR": "Excluir os Service Workers"
+          },
+          "body": {
+            "en": "The Service Worker registrations and CacheStorage of the page’s origin are deleted.",
+            "ja": "表示中のページのオリジンの Service Worker 登録と CacheStorage を削除します。",
+            "zh_CN": "删除当前页面所属来源的 Service Worker 注册和 CacheStorage。",
+            "zh_TW": "刪除目前頁面所屬[[來源]]的 Service Worker 註冊與 CacheStorage。",
+            "ko": "현재 페이지 출처의 Service Worker 등록과 CacheStorage를 삭제합니다.",
+            "es": "Se eliminan los registros de Service Worker y el CacheStorage del origen de la página.",
+            "fr": "Les enregistrements Service Worker et le CacheStorage de l’origine de la page sont supprimés.",
+            "de": "Service-Worker-Registrierungen und CacheStorage des [[Seiten-Origins]] werden gelöscht.",
+            "pt_BR": "Os registros de Service Worker e o CacheStorage da origem da página são excluídos."
+          }
+        },
+        {
+          "title": {
+            "en": "Clear the HTTP cache",
+            "ja": "HTTPキャッシュを削除",
+            "zh_CN": "清除 HTTP 缓存",
+            "zh_TW": "清除 HTTP 快取",
+            "ko": "HTTP 캐시 삭제",
+            "es": "Borrar la caché HTTP",
+            "fr": "Vider le cache HTTP",
+            "de": "HTTP-Cache leeren",
+            "pt_BR": "Limpar o cache HTTP"
+          },
+          "body": {
+            "en": "Cached files of the same origin are cleared as well.",
+            "ja": "同じオリジンのキャッシュ済みファイルも削除します。",
+            "zh_CN": "同一来源已缓存的文件也会一并[[清除]]。",
+            "zh_TW": "同一來源已快取的檔案也會一併[[清除]]。",
+            "ko": "같은 출처에 캐시된 파일도 함께 삭제합니다.",
+            "es": "También se borran los archivos en caché del mismo origen.",
+            "fr": "Les fichiers en cache de la même origine sont également supprimés.",
+            "de": "Auch die im Cache gespeicherten Dateien desselben Origins werden gelöscht.",
+            "pt_BR": "Os arquivos em cache da mesma origem também são removidos."
+          }
+        },
+        {
+          "title": {
+            "en": "Reload without cache",
+            "ja": "キャッシュを使わず再読み込み",
+            "zh_CN": "绕过缓存重新加载",
+            "zh_TW": "略過快取重新載入",
+            "ko": "캐시 없이 새로고침",
+            "es": "Recargar sin caché",
+            "fr": "Recharger sans cache",
+            "de": "Ohne Cache neu laden",
+            "pt_BR": "Recarregar sem cache"
+          },
+          "body": {
+            "en": "The page reloads while bypassing the cache, even if clearing fails.",
+            "ja": "キャッシュをバイパスして再読み込みします。削除に失敗しても再読み込みは行います。",
+            "zh_CN": "绕过缓存重新加载页面；即使清除失败也会重新加载。",
+            "zh_TW": "略過快取重新載入頁面；即使清除失敗仍會重新載入。",
+            "ko": "캐시를 우회해 페이지를 새로고침하며, 삭제에 실패해도 새로고침은 진행합니다.",
+            "es": "La página se recarga sin usar la caché, aunque falle el borrado.",
+            "fr": "La page se recharge en contournant le cache, même si la suppression échoue.",
+            "de": "Die Seite lädt ohne Cache neu, auch wenn das Leeren fehlschlägt.",
+            "pt_BR": "A página é recarregada ignorando o cache, mesmo que a limpeza falhe."
+          }
+        }
+      ]
+    },
+    {
+      "layout": "feature",
+      "capture": "menu-all",
+      "kicker": {
+        "en": "Right-click menu",
+        "ja": "右クリックメニュー",
+        "zh_CN": "右键菜单",
+        "zh_TW": "右鍵選單",
+        "ko": "오른쪽 클릭 메뉴",
+        "es": "Menú contextual",
+        "fr": "Menu contextuel",
+        "de": "Kontextmenü",
+        "pt_BR": "Menu de contexto"
+      },
+      "title": {
+        "en": "Reload every tab in one go",
+        "ja": "全タブを一括でクリーンリロード",
+        "zh_CN": "一次性彻底刷新\n所有标签页",
+        "zh_TW": "一次徹底重新整理\n所有分頁",
+        "ko": "모든 탭을 한 번에 클린 새로고침",
+        "es": "Recargue todas las pestañas de una vez",
+        "fr": "Rechargez tous les onglets d’un coup",
+        "de": "Alle Tabs in einem Rutsch neu laden",
+        "pt_BR": "Recarregue todas as abas de uma vez"
+      },
+      "body": {
+        "en": "Right-click the toolbar icon to clear the cache of every open origin and reload all tabs.",
+        "ja": "ツールバーのアイコンを右クリックすると、開いているすべてのタブのオリジンのキャッシュを削除して再読み込みします。",
+        "zh_CN": "右键点击工具栏图标，即可清除所有已打开来源的缓存并刷新全部标签页。",
+        "zh_TW": "在工具列圖示上按右鍵，即可清除所有已開啟[[來源]]的快取並重新整理全部分頁。",
+        "ko": "툴바 아이콘을 오른쪽 클릭하면 열려 있는 모든 출처의 캐시를 지우고 모든 탭을 새로고침합니다.",
+        "es": "Haga clic derecho en el icono de la barra para borrar la caché de todos los orígenes abiertos y recargar todas las pestañas.",
+        "fr": "Faites un clic droit sur l’icône de la barre pour vider le cache de chaque origine ouverte et recharger tous les onglets.",
+        "de": "Klicken Sie mit der rechten Maustaste auf das Symbol in der Symbolleiste, um den Cache aller geöffneten Origins zu leeren und alle Tabs neu zu laden.",
+        "pt_BR": "Clique com o botão direito no ícone da barra de ferramentas para limpar o cache de todas as origens abertas e recarregar todas as abas."
+      },
+      "bullets": [
+        {
+          "en": "Each origin’s cache is cleared once",
+          "ja": "同じオリジンは1回だけまとめて削除",
+          "zh_CN": "相同来源只清除一次",
+          "zh_TW": "相同來源只清除一次",
+          "ko": "같은 출처는 한 번만 삭제",
+          "es": "Cada origen se borra una sola vez",
+          "fr": "Chaque origine n’est vidée qu’une fois",
+          "de": "Jeder Origin wird nur einmal geleert",
+          "pt_BR": "Cada origem é limpa só uma vez"
+        },
+        {
+          "en": "Browser-internal pages are skipped",
+          "ja": "ブラウザ内部のページは対象外",
+          "zh_CN": "浏览器内部页面不受影响",
+          "zh_TW": "瀏覽器內部頁面不受影響",
+          "ko": "브라우저 내부 페이지는 제외",
+          "es": "Las páginas internas del navegador se omiten",
+          "fr": "Les pages internes du navigateur sont ignorées",
+          "de": "Interne Browserseiten werden übersprungen",
+          "pt_BR": "Páginas internas do navegador são ignoradas"
+        },
+        {
+          "en": "Local files reload with the cache bypassed",
+          "ja": "ローカルのHTMLファイルはキャッシュをバイパスして再読み込み",
+          "zh_CN": "本地文件绕过缓存重新加载",
+          "zh_TW": "本機檔案略過快取重新載入",
+          "ko": "로컬 파일은 캐시를 우회해 새로고침",
+          "es": "Los archivos locales se recargan sin usar la caché",
+          "fr": "Les fichiers locaux se rechargent sans cache",
+          "de": "Lokale Dateien laden ohne Cache neu",
+          "pt_BR": "Arquivos locais recarregam sem usar o cache"
+        }
+      ]
+    },
+    {
+      "layout": "feature",
+      "capture": "menu-sleep",
+      "kicker": {
+        "en": "Right-click menu",
+        "ja": "右クリックメニュー",
+        "zh_CN": "右键菜单",
+        "zh_TW": "右鍵選單",
+        "ko": "오른쪽 클릭 메뉴",
+        "es": "Menú contextual",
+        "fr": "Menu contextuel",
+        "de": "Kontextmenü",
+        "pt_BR": "Menu de contexto"
+      },
+      "title": {
+        "en": "Put background tabs to sleep",
+        "ja": "バックグラウンドのタブをスリープ",
+        "zh_CN": "让后台[[标签页]]一键休眠",
+        "zh_TW": "讓背景分頁一鍵休眠",
+        "ko": "백그라운드 탭을 한 번에 절전",
+        "es": "Suspenda las pestañas en segundo plano",
+        "fr": "Mettez les onglets en [[arrière-plan]] en veille",
+        "de": "Hintergrund-Tabs in den Ruhezustand versetzen",
+        "pt_BR": "Suspenda as abas em segundo plano"
+      },
+      "body": {
+        "en": "Free memory without closing anything. Sleeping tabs stay in the tab bar and reload when you select them.",
+        "ja": "何も閉じずにメモリを解放します。スリープしたタブはタブバーに残り、選択すると再読み込みされます。",
+        "zh_CN": "无需关闭任何标签页即可释放内存。休眠的[[标签页]]会保留在标签栏中，选中时自动重新加载。",
+        "zh_TW": "不必關閉任何分頁即可釋放記憶體。休眠的分頁會保留在分頁列，選取時會自動重新載入。",
+        "ko": "아무것도 닫지 않고 메모리를 확보합니다. 절전된 탭은 탭 표시줄에 남아 있다가 선택하면 다시 불러옵니다.",
+        "es": "Libera memoria sin cerrar nada. Las pestañas suspendidas siguen en la barra y se recargan al seleccionarlas.",
+        "fr": "Libérez de la mémoire sans rien fermer. Les onglets en veille restent dans la barre et se rechargent lorsque vous les sélectionnez.",
+        "de": "Gibt Arbeitsspeicher frei, ohne etwas zu schließen. Schlafende Tabs bleiben in der Tab-Leiste und laden beim Auswählen neu.",
+        "pt_BR": "Libere memória sem fechar nada. As abas suspensas continuam na barra e são recarregadas quando você as seleciona."
+      },
+      "bullets": [
+        {
+          "en": "Each window’s visible tab stays awake",
+          "ja": "各ウィンドウで表示中のタブは対象外",
+          "zh_CN": "各窗口中正在显示的标签页不受影响",
+          "zh_TW": "各視窗中正在顯示的分頁不受影響",
+          "ko": "각 창에서 표시 중인 탭은 제외",
+          "es": "La pestaña visible de cada ventana no se suspende",
+          "fr": "L’onglet visible de chaque fenêtre reste actif",
+          "de": "Der sichtbare Tab jedes Fensters bleibt aktiv",
+          "pt_BR": "A aba visível de cada janela continua ativa"
+        },
+        {
+          "en": "No browser settings are changed",
+          "ja": "ブラウザの設定は変更しません",
+          "zh_CN": "不会更改浏览器设置",
+          "zh_TW": "不會變更瀏覽器設定",
+          "ko": "브라우저 설정은 변경하지 않음",
+          "es": "No se cambia ningún ajuste del navegador",
+          "fr": "Aucun paramètre du navigateur n’est modifié",
+          "de": "Keine Browsereinstellungen werden geändert",
+          "pt_BR": "Nenhuma configuração do navegador é alterada"
+        },
+        {
+          "en": "The DNS cache page opens from the same menu",
+          "ja": "同じメニューからDNSキャッシュの画面も開けます",
+          "zh_CN": "同一菜单还可打开 DNS 缓存页面",
+          "zh_TW": "同一選單也能開啟 DNS 快取頁面",
+          "ko": "같은 메뉴에서 DNS 캐시 화면도 열 수 있음",
+          "es": "La página de la caché DNS se abre desde el mismo menú",
+          "fr": "La page du cache DNS s’ouvre depuis le même menu",
+          "de": "Die DNS-Cache-Seite öffnen Sie über dasselbe Menü",
+          "pt_BR": "A página do cache DNS abre no mesmo menu"
+        }
+      ]
+    },
+    {
+      "layout": "steps",
+      "title": {
+        "en": "Only the cache is cleared",
+        "ja": "消すのはキャッシュだけ",
+        "zh_CN": "只清除缓存，不动其他数据",
+        "zh_TW": "只清除快取，不動其他資料",
+        "ko": "지우는 것은 캐시뿐",
+        "es": "Solo se borra la caché",
+        "fr": "Seul le cache est vidé",
+        "de": "Gelöscht wird nur der Cache",
+        "pt_BR": "Só o cache é limpo"
+      },
+      "steps": [
+        {
+          "title": {
+            "en": "One origin at a time",
+            "ja": "オリジン単位",
+            "zh_CN": "按来源处理",
+            "zh_TW": "依來源處理",
+            "ko": "출처 단위로 처리",
+            "es": "Un origen cada vez",
+            "fr": "Une origine à la fois",
+            "de": "Ein Origin nach dem anderen",
+            "pt_BR": "Uma origem por vez"
+          },
+          "body": {
+            "en": "Only the origin of the page you reload is cleaned, not the whole browser.",
+            "ja": "再読み込みするページのオリジンだけを対象にし、ブラウザ全体は消しません。",
+            "zh_CN": "只清理所刷新页面所属的[[来源]]，而不是整个浏览器。",
+            "zh_TW": "只清理所重新整理頁面所屬的[[來源]]，而不是整個瀏覽器。",
+            "ko": "새로고침하는 페이지의 출처만 정리하며 브라우저 전체는 지우지 않습니다.",
+            "es": "Solo se limpia el origen de la página que recarga, no todo el navegador.",
+            "fr": "Seule l’origine de la page rechargée est nettoyée, pas tout le navigateur.",
+            "de": "Bereinigt wird nur der Origin der neu geladenen Seite, nicht der ganze Browser.",
+            "pt_BR": "Só a origem da página recarregada é limpa, não o navegador inteiro."
+          }
+        },
+        {
+          "title": {
+            "en": "Everything else stays",
+            "ja": "ほかのデータはそのまま",
+            "zh_CN": "其他数据原样保留",
+            "zh_TW": "其他資料原樣保留",
+            "ko": "다른 데이터는 그대로",
+            "es": "Todo lo demás se conserva",
+            "fr": "Tout le reste est conservé",
+            "de": "Alles andere bleibt erhalten",
+            "pt_BR": "O resto continua intacto"
+          },
+          "body": {
+            "en": "Cookies, logins, history and passwords are never deleted.",
+            "ja": "Cookie・ログイン状態・閲覧履歴・パスワードは削除しません。",
+            "zh_CN": "不会删除 Cookie、登录状态、[[浏览历史记录]]和密码。",
+            "zh_TW": "不會刪除 Cookie、登入狀態、[[瀏覽記錄]]與密碼。",
+            "ko": "쿠키, 로그인 상태, 방문 기록, 비밀번호는 삭제하지 않습니다.",
+            "es": "Nunca se eliminan las cookies, las sesiones iniciadas, el historial ni las contraseñas.",
+            "fr": "Les cookies, connexions, historique et mots de passe ne sont jamais supprimés.",
+            "de": "Cookies, Anmeldungen, Verlauf und Passwörter werden nie gelöscht.",
+            "pt_BR": "Cookies, logins, histórico e senhas nunca são excluídos."
+          }
+        },
+        {
+          "title": {
+            "en": "Nothing leaves your browser",
+            "ja": "外部への送信なし",
+            "zh_CN": "不向外发送任何内容",
+            "zh_TW": "不向外傳送任何內容",
+            "ko": "외부 전송 없음",
+            "es": "Nada sale de su navegador",
+            "fr": "Rien ne quitte votre navigateur",
+            "de": "Nichts verlässt Ihren Browser",
+            "pt_BR": "Nada sai do seu navegador"
+          },
+          "body": {
+            "en": "No analytics, no settings screen, no external requests.",
+            "ja": "解析も設定画面も外部通信もありません。",
+            "zh_CN": "没有统计分析，没有设置界面，也没有外部请求。",
+            "zh_TW": "沒有分析統計、沒有設定畫面，也沒有外部請求。",
+            "ko": "분석 도구도, 설정 화면도, 외부 요청도 없습니다.",
+            "es": "Sin análisis, sin pantalla de ajustes y sin solicitudes externas.",
+            "fr": "Aucun outil d’analyse, aucun écran de paramètres, aucune requête externe.",
+            "de": "Keine Analyse, kein Einstellungsdialog, keine externen Anfragen.",
+            "pt_BR": "Sem análises, sem tela de configurações e sem solicitações externas."
+          }
+        }
+      ]
+    }
+  ],
+  "tiles": {
+    "tagline": "Clear the cache and reload in one click",
+    "capture": "menu-hero"
+  }
+}

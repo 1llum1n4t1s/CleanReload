@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="vitrina-fixture" content="context-menu">
+<title></title>
+<!--
+  ストア画像用の固定ページ。Clean Reload は popup もコンテンツスクリプトも持たず、操作はツールバーアイコンの
+  右クリックメニュー（ブラウザ描画）なので実UIを撮れない。そこでブラウザ枠・タブ列・ツールバー・メニューを
+  中立的な骨組み（文字なし・他社ロゴなし）で描き、メニュー項目の文言だけを拡張の _locales から差し込む
+  （store-assets.steps.mjs が data-msg を埋める）。
+  クエリ ?v= で表示を切り替える: menu（既定）/ all（全タブ再読み込み）/ sleep（バックグラウンドタブ）。
+-->
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #ffffff; overflow: hidden; }
+  #stage { position: relative; width: 520px; height: 360px; background: #f4f5f7; overflow: hidden; }
+
+  /* タブ列 */
+  .tabs { height: 44px; display: flex; align-items: flex-end; gap: 4px; padding: 0 12px; background: #1e2024; }
+  .tab { position: relative; flex: 1; max-width: 112px; height: 34px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: rgba(255,255,255,.06); }
+  .tab.on { background: #35383e; }
+  .tab .fav { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.34); flex: none; }
+  .tab .ttl { height: 7px; flex: 1; border-radius: 4px; background: rgba(255,255,255,.22); }
+  .tab .spin { display: none; width: 14px; height: 14px; flex: none; }
+  /* 全タブ: 全タブの再読み込みを矢印で示す */
+  body[data-v="all"] .tab .fav { display: none; }
+  body[data-v="all"] .tab .spin { display: block; }
+  body[data-v="all"] .tab { background: rgba(41,163,232,.22); }
+  body[data-v="all"] .tab.on { background: rgba(41,163,232,.42); }
+  /* スリープ: 表示中のタブ以外を暗くする */
+  body[data-v="sleep"] .tab:not(.on) { opacity: .42; }
+  body[data-v="sleep"] .tab:not(.on) .fav { background: rgba(255,255,255,.2); }
+
+  /* ツールバー */
+  .toolbar { height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: #35383e; }
+  .toolbar .dot { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,.22); flex: none; }
+  .toolbar .omni { flex: 1; height: 30px; border-radius: 15px; background: #202226; }
+  .ext { position: relative; width: 30px; height: 30px; flex: none; }
+  .ext img { display: block; width: 30px; height: 30px; }
+  .ext .badge { display: none; position: absolute; right: -6px; bottom: -4px; padding: 1px 4px; border-radius: 4px; background: #4caf50; color: #fff; font-size: 9px; line-height: 12px; font-weight: 700; }
+  body[data-v="all"] .ext .badge, body[data-v="sleep"] .ext .badge { display: block; }
+  .toolbar .avatar { width: 26px; height: 26px; border-radius: 50%; background: #5f6b7a; flex: none; }
+
+  /* ページ（灰色のバーだけ） */
+  .page { padding: 24px 28px; }
+  .page .hero { width: 200px; height: 18px; border-radius: 9px; background: #d9dde3; margin-bottom: 18px; }
+  .page .l { height: 10px; border-radius: 5px; background: #e4e7ec; margin-bottom: 12px; width: 52%; }
+  .page .l.s { width: 38%; }
+  .page .card { width: 150px; height: 84px; border-radius: 12px; background: #e9ecf1; margin-top: 18px; }
+
+  /* コンテキストメニュー（ブラウザ描画のメニューの再現。右上、アイコンの下に出る） */
+  .menu { position: absolute; right: 14px; top: 104px; width: 424px; padding: 8px 0; border-radius: 10px; background: #ffffff; box-shadow: 0 12px 32px rgba(0,0,0,.32), 0 0 0 1px rgba(0,0,0,.08); color: #202124; font-size: 15px; line-height: 1.35; font-weight: 500; }
+  .menu .item { padding: 12px 20px; }
+  .menu .item.hot { background: #e8f0fe; }
+  .menu .sep { height: 1px; margin: 6px 0; background: #e3e5e8; }
+  .menu .ph { height: 9px; margin: 14px 20px; border-radius: 5px; background: #dfe2e6; width: 150px; }
+  .menu .ph.w { width: 110px; }
+</style>
+</head>
+<body data-v="menu">
+  <div id="stage">
+    <div class="tabs">
+      <div class="tab on"><span class="fav"></span><svg class="spin" viewBox="0 0 16 16" fill="none" stroke="#7fd0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.6 2.2v3.2h-3.2"/></svg><span class="ttl"></span></div>
+      <div class="tab"><span class="fav"></span><svg class="spin" viewBox="0 0 16 16" fill="none" stroke="#7fd0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.6 2.2v3.2h-3.2"/></svg><span class="ttl"></span></div>
+      <div class="tab"><span class="fav"></span><svg class="spin" viewBox="0 0 16 16" fill="none" stroke="#7fd0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.6 2.2v3.2h-3.2"/></svg><span class="ttl"></span></div>
+      <div class="tab"><span class="fav"></span><svg class="spin" viewBox="0 0 16 16" fill="none" stroke="#7fd0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.6 2.2v3.2h-3.2"/></svg><span class="ttl"></span></div>
+    </div>
+    <div class="toolbar">
+      <span class="dot"></span><span class="dot"></span>
+      <div class="omni"></div>
+      <div class="ext"><img id="ext-icon" alt=""><span class="badge" id="badge"></span></div>
+      <span class="avatar"></span>
+    </div>
+    <div class="page">
+      <div class="hero"></div>
+      <div class="l"></div><div class="l s"></div><div class="l"></div>
+      <div class="card"></div>
+    </div>
+    <div class="menu">
+      <div class="item" id="m1" data-msg="menuCleanReloadAllTabs"></div>
+      <div class="item" id="m2" data-msg="menuDiscardBackgroundTabs"></div>
+      <div class="item" id="m3" data-msg="menuOpenDnsCache"></div>
+      <div class="sep"></div>
+      <div class="ph"></div>
+      <div class="ph w"></div>
+    </div>
+  </div>
+  <script>
+    // 表示の切り替え（?v=menu|all|sleep）。ハイライトするメニュー項目とバッジ文字（拡張の実バッジと同じ ALL / ZZZ）
+    (function () {
+      var v = new URLSearchParams(location.search).get('v') || 'menu';
+      document.body.dataset.v = v;
+      var hot = { menu: 'm1', all: 'm1', sleep: 'm2' }[v];
+      if (hot) document.getElementById(hot).classList.add('hot');
+      document.getElementById('badge').textContent = v === 'all' ? 'ALL' : v === 'sleep' ? 'ZZZ' : '';
+    })();
+  </script>
+</body>
+</html>
