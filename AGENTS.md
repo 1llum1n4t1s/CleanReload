@@ -22,9 +22,9 @@ bun --bun run build              # 上記2つを順次実行
 - テスト・Lint・フォーマッタの package scripts は**未定義**。`bun --bun run test` などは存在しない。Firefox 配布前には下記の `bun --bun run web-ext lint` を実行する。
 - CI と同じ依存解決には Bun 1.4.4 と `bun run deps` を使う。アイコン生成だけなら `PUPPETEER_SKIP_DOWNLOAD=1` で Chromium のダウンロードを省略できる。
 - 拡張機能本体の開発には `sharp` しか不要。`generate-screenshots` はストア画像用途で、普段のコード編集では実行しなくてよい。
-- `generate-screenshots` は Windows の release プロファイルで実拡張を読み込み、9 言語×5 枚とタイル 2 種を作る（約 1 分。出力が止まって見えても重複起動せず完了を待つ）。作業物の既定は `D:\tmp\vitrina-CleanReload`（キットの `--work-dir` 既定値）。
+- `generate-screenshots` は Windows の release プロファイルで実拡張を読み込み、9 言語×5 枚とタイル 2 種を作る（約 1 分。出力が止まって見えても重複起動せず完了を待つ）。作業物の既定は `%TEMP%\vitrina-CleanReload`（キットの `--work-dir` 既定値）。
 - Clean Reload は popup・content script・storage 権限が無く、操作が右クリックメニュー（ブラウザ描画）なので実 UI を撮れない。`webstore/fixtures/context-menu.html` の中立的なメニュー再現に、`_locales` の文言とアイコンを `webstore/store-assets.steps.mjs` が差し込んで撮る。vitrina の `chrome.storage` 書き込みは、同 steps ファイルが storage 権限の無い拡張向けに省く（キットは改変しない）。
-- 画像の検証・一覧は `bun webstore/vitrina/vitrina.mjs verify` と `bun webstore/vitrina/vitrina.mjs sheet --sheet-dir <D:\tmp 配下>`。画像文言は `store-assets.json` の `{ "msg": … }`（`_locales` 参照）か 9 言語の直書きで、訳は `Kagayoi.Support/clients/chrome-extension/l10n/glossary.md` に従う。
+- 画像の検証・一覧は `bun webstore/vitrina/vitrina.mjs verify` と `bun webstore/vitrina/vitrina.mjs sheet --sheet-dir <%TEMP% 配下>`。画像文言は `store-assets.json` の `{ "msg": … }`（`_locales` 参照）か 9 言語の直書きで、訳は `Kagayoi.Support/clients/chrome-extension/l10n/glossary.md` に従う。
 
 ### 依存の overrides / patch（[package.json](package.json)）
 
@@ -32,7 +32,7 @@ devDependency の `web-ext` 配下に出た脆弱性を、上流が未修正の�
 
 minimatch は `^11.0.4` へ、旧 default import を使う multimatch は `^8.0.0` へ override する。`@eslint/eslintrc@3.3.7` の ESM import は `patches/@eslint%2Feslintrc@3.3.7.patch` で named import へ修正する。Bun の `patchedDependencies` で適用し、同パッケージ更新時は上流の import と patch の要否を確認する。旧 minimatch 3 の brace-expansion interop patch は不要になった。
 
-- **Chrome を起動するスクリプトを足すときはシード必須**: puppeteer.launch・chrome-launcher・Chrome の直接起動は、起動前に user-data-dir の `Local State` へ `{"password_manager":{"os_password_blank":false,"os_password_last_changed":"9223372036854775000"}}` を書く。Windows の Chromium は新規プロファイルごとに空パスワードで LogonUser を呼び（`password_manager_util_win.cc` の `CheckBlankPasswordWithPrefs`）、ログオン失敗（Security 4625）として数えられるため、並列・連続起動で Windows アカウントがロックされる（2026-11-15 実害）。userDataDir 未指定の起動は作らず、`webstore/vitrina/lib/capture.mjs` の `seedChromeProfile`（および一時プロファイルは D:\tmp 配下）と同等の処理を先に呼ぶ。`webstore/vitrina/` は逐語コピーで対策済み。
+- **Chrome を起動するスクリプトを足すときはシード必須**: puppeteer.launch・chrome-launcher・Chrome の直接起動は、起動前に user-data-dir の `Local State` へ `{"password_manager":{"os_password_blank":false,"os_password_last_changed":"9223372036854775000"}}` を書く。Windows の Chromium は新規プロファイルごとに空パスワードで LogonUser を呼び（`password_manager_util_win.cc` の `CheckBlankPasswordWithPrefs`）、ログオン失敗（Security 4625）として数えられるため、並列・連続起動で Windows アカウントがロックされる（2026-11-15 実害）。userDataDir 未指定の起動は作らず、`webstore/vitrina/lib/capture.mjs` の `seedChromeProfile`（および一時プロファイルは %TEMP% 配下）と同等の処理を先に呼ぶ。`webstore/vitrina/` は逐語コピーで対策済み。
 
 ## 開発時の読み込み
 
