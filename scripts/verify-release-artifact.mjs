@@ -19,7 +19,7 @@ export function verifySource() {
   const chrome = json('manifest.json');
   const firefox = json('manifest.firefox.json');
   const version = chrome.version;
-  check(process.env.RELEASE_REF_NAME === `release/${version}`, 'release branch/version mismatch');
+  check(process.env.RELEASE_REF_NAME === `v${version}`, 'release tag/version mismatch');
   check(firefox.version === version && json('package.json').version === version, 'manifest/package versions differ');
   execFileSync('git', ['diff', '--exit-code', 'HEAD', '--', 'manifest.json', 'manifest.firefox.json', 'package.json', '_locales', 'src', 'icons/icon.svg'], { cwd: root, stdio: 'pipe' });
   check(chrome.manifest_version === 3 && chrome.background?.service_worker === 'src/background/background.js' && !chrome.background.scripts, 'invalid Chrome background');

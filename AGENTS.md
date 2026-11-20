@@ -53,11 +53,11 @@ PowerShell スクリプトは PowerShell 7 系（`pwsh`、検証版 7.6.9）で�
 ## リリース (Chrome Web Store + Firefox AMO 自動公開)
 
 1. `manifest.json`、`manifest.firefox.json`、`package.json` の `version` を上げてコミット（3ファイルは一致必須。更新は `/vava` 経由）
-2. `release/x.y.z`（`x.y.z` は manifest の version と一致必須）ブランチを push
+2. `main` を push してから、同じ commit に軽量タグ `vx.y.z`（`x.y.z` は manifest の version と一致必須）を付けてそのタグだけを push
 3. [.github/workflows/publish.yml](.github/workflows/publish.yml) が 2 job を並列起動:
    - **publish**（Chrome）: lockfile固定のbuild → ZIP実物verifier → receiptのSHA-256を `scripts/Publish-Cws.ps1` へ渡してアップロードする（申請は `cws-submit.yml`）。
    - **publish-firefox**（AMO）: firefox-build 構築 → `web-ext lint` → 最終XPI検証 → `scripts/Publish-Amo.ps1`
-4. ブランチ名と manifest バージョンの整合性チェックあり（不一致なら fail）。Firefox の初回登録のみ AMO Developer Hub で実施（§Firefox AMO 対応）。
+4. タグ名と manifest バージョンの整合性チェックあり（不一致なら fail）。Firefox の初回登録のみ AMO Developer Hub で実施（§Firefox AMO 対応）。
 
 ## 構造と編集先
 
@@ -75,14 +75,14 @@ Firefox 版は **Chrome と同じ `src/` を共有**し、`manifest.firefox.json
 - `background` は `scripts` 配列のみ（Firefox MV3 は `service_worker` 非対応）。`service_worker` キーは書かない。
 - `browser_specific_settings.gecko.strict_min_version` は **`142.0`**。`data_collection_permissions` が Firefox 142+ 導入のため、140 等にすると AMO の `KEY_FIREFOX_ANDROID_UNSUPPORTED_BY_MIN_VERSION` 警告が出る。両者を 142 で揃える。
 - gecko id は本拡張専用の UUID `{a4a7df25-9281-44f6-9d06-5959599c6473}`（他拡張と共有しない）。
-- version は `manifest.json` と `package.json` に一致させる（CI がversionの相互整合とブランチ名を照合）。
+- version は `manifest.json` と `package.json` に一致させる（CI がversionの相互整合とタグ名を照合）。
 
 ### 初回 AMO 登録
 
 初回は https://addons.mozilla.org/developers/ の「Submit a New Add-on」から、検証済みFirefox XPIをアップロードして登録する。GUIDは `{a4a7df25-9281-44f6-9d06-5959599c6473}` を維持し、categoriesは `other`、licenseはMITとする。PowerShell publisherは登録済みGUIDへの新version提出専用で、未登録の404では停止する。初回完了後はCIの `publish-firefox` jobが新versionの提出を担う。人手レビューの承認・公開はCI成功と区別する。
 
 ### CI（publish.yml の `publish-firefox` job）
-`release/x.y.z` push で Chrome `publish` job と**並列・独立**に実行（`if: success() || failure()` で Chrome 失敗時も submit）。GitHub Secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` を使用。firefox-build 構築 → `web-ext lint` → `scripts/Publish-Amo.ps1` の順。
+版タグ `vx.y.z` の push で Chrome `publish` job と**並列・独立**に実行（`if: success() || failure()` で Chrome 失敗時も submit）。GitHub Secrets `AMO_JWT_ISSUER` / `AMO_JWT_SECRET` を使用。firefox-build 構築 → `web-ext lint` → `scripts/Publish-Amo.ps1` の順。
 
 ### AMO listing（説明文）の更新は API 経由（スクショは手動）
 `--dry-run` は資格情報・ネットワークなしで入力を検証する。このスクリプトはスクリーンショットを更新しないため、AMO Developer Hub から手動アップロードする（`webstore/images/<ロケール>/screenshot-NN.png`）。
@@ -116,11 +116,11 @@ bun "$HOME/.agents/skills/vava/scripts/update-amo-listing.mjs" --slug 'clean-rel
 
 `publish.yml` は検証済みZIPを `-Stage Upload` で下書きとしてアップロードするだけで、審査へは申請しない。新ロケールの掲載画像欄はアップロード後でないと Dashboard に出ないため、申請は別workflow `.github/workflows/cws-submit.yml`（手動実行、`-Stage Publish`）で行う。
 
-1. `release/x.y.z` を push する（publish.yml がアップロードする）
+1. `main` を push してから、同じ commit に軽量タグ `vx.y.z` を付けてそのタグだけを push する（publish.yml がアップロードする）
 2. Dashboard（Edictora）でロケール別の掲載画像などを整えて下書き保存する
-3. `gh workflow run cws-submit.yml -f version=x.y.z --ref release/x.y.z` で申請する
+3. `gh workflow run cws-submit.yml -f version=x.y.z --ref vx.y.z` で申請する
 
-- API v2 は未申請の下書き版を返さないため、下書きの版そのものは確認できない。`cws-submit.yml` は次を満たす場合だけ `:publish` する: 実行 ref が `release/<version>` で manifest の版が入力と一致する。`publish.yml` の直近のアップロード成功 run（固定ステップ名 `Chrome Web Store にアップロード（下書き）`。`actions: read` で履歴を参照）が同じ commit である。fetchStatus で item identity・直近アップロード状態・公開/審査中の版を確認できる。
+- API v2 は未申請の下書き版を返さないため、下書きの版そのものは確認できない。`cws-submit.yml` は次を満たす場合だけ `:publish` する: 実行 ref が軽量タグ `v<version>`（`main` の祖先）で manifest の版が入力と一致する。`publish.yml` の直近のアップロード成功 run（固定ステップ名 `Chrome Web Store にアップロード（下書き）`。`actions: read` で履歴を参照）が同じ commit で、同じタグから起動している。fetchStatus で item identity・直近アップロード状態・公開/審査中の版を確認できる。
 - 同版が申請済み・公開済み（PENDING_REVIEW / STAGED / PUBLISHED / PUBLISHED_TO_TESTERS）なら再送せず成功終了する。別版の審査中、より新しい版の存在、直近アップロードの進行中・失敗、状態不明は申請せず停止する。
 - Dashboard で手動アップロードした下書きなど、同じ commit のアップロード成功 run が無い場合は申請されない。その場合は Dashboard から手動で申請する。
 - 両workflowは同じ concurrency group で直列化する。申請中は Dashboard の操作を並行しない。
