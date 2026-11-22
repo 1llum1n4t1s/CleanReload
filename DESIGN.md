@@ -6,7 +6,7 @@
 
 Clean Reload は Chrome / Firefox 向け Manifest V3 拡張機能です。利用者の明示操作に応じて、単一タブまたは全タブのキャッシュを消去して再読み込みするほか、非アクティブなタブをメモリから破棄します。ページへのコード注入、利用者データの保存、外部サーバーへの送信は行いません。
 
-`../vps-web/lp/cleanreload/` は `cleanreload.kagayoi.com` の案内・プライバシーページを Cloudflare Workers Static Assets へ配信する静的ソースです。拡張機能の実行やストア配布には関与しません。
+案内ページ（LP）は撤去済みで、プライバシーポリシーは `https://privacy.kagayoi.com/cleanreload`（`../vps-web/lp/privacy/`、Cloudflare Workers Static Assets）に集約されています。拡張機能の実行やストア配布には関与しません。
 
 ## 主要コンポーネントと境界
 
